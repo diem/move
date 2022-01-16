@@ -1,28 +1,29 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use clap::Args;
+
 use crate::{cargo::Cargo, context::XContext, Result};
 use std::ffi::OsString;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(long)]
+#[derive(Debug, Args)]
+pub struct FmtArgs {
+    #[clap(long)]
     /// Run in 'check' mode. Exits with 0 if input is
     /// formatted correctly. Exits with 1 and prints a diff if
     /// formatting is required.
     check: bool,
 
-    #[structopt(long)]
+    #[clap(long)]
     /// Run check on all packages in the workspace
     workspace: bool,
 
-    #[structopt(name = "ARGS", parse(from_os_str), last = true)]
+    #[clap(name = "ARGS", parse(from_os_str), last = true)]
     /// Pass through args to rustfmt
     args: Vec<OsString>,
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: FmtArgs, xctx: XContext) -> Result<()> {
     // Hardcode that we want imports merged
     let mut pass_through_args = vec!["--config".into(), "imports_granularity=crate".into()];
 

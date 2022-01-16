@@ -4,36 +4,34 @@
 use crate::context::XContext;
 use anyhow::Context;
 use camino::{Utf8Path, Utf8PathBuf};
+use clap::{ArgEnum, Args};
 use guppy::graph::{
     cargo::CargoOptions,
     feature::{FeatureSet, StandardFeatures},
 };
 use std::fs;
-use structopt::{clap::arg_enum, StructOpt};
 
-arg_enum! {
-    #[derive(Debug, Copy, Clone)]
-    pub enum OutputFormat {
-        Toml,
-        Json,
-    }
+#[derive(Debug, Copy, Clone, ArgEnum)]
+pub enum OutputFormat {
+    Toml,
+    Json,
 }
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(name = "OUT_DIR")]
+#[derive(Debug, Args)]
+pub struct GenerateSummariesArgs {
+    #[clap(name = "OUT_DIR")]
     /// Directory to output summaries to (default: target/summaries)
     out_dir: Option<Utf8PathBuf>,
-    #[structopt(name = "OUTPUT_FORMAT", default_value = "Toml")]
+    #[clap(name = "OUTPUT_FORMAT", arg_enum, default_value_t = OutputFormat::Toml)]
     /// Output in text, toml or json
     output_format: OutputFormat,
 }
 
-impl Args {
+impl GenerateSummariesArgs {
     const DEFAULT_OUT_DIR: &'static str = "target/summaries";
 }
 
-pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
+pub fn run(args: GenerateSummariesArgs, xctx: XContext) -> crate::Result<()> {
     let config = xctx.config();
     let summaries_config = config.summaries_config();
     let pkg_graph = xctx.core().package_graph()?;
@@ -42,9 +40,11 @@ pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
     let default_opts = summaries_config.default.to_cargo_options(pkg_graph)?;
     let full_opts = summaries_config.full.to_cargo_options(pkg_graph)?;
 
-    let out_dir = args
-        .out_dir
-        .unwrap_or_else(|| xctx.core().project_root().join(Args::DEFAULT_OUT_DIR));
+    let out_dir = args.out_dir.unwrap_or_else(|| {
+        xctx.core()
+            .project_root()
+            .join(GenerateSummariesArgs::DEFAULT_OUT_DIR)
+    });
 
     fs::create_dir_all(&out_dir)?;
 

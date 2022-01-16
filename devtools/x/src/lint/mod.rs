@@ -3,7 +3,7 @@
 
 use crate::context::XContext;
 use anyhow::anyhow;
-use structopt::StructOpt;
+use clap::Args;
 use x_lint::prelude::*;
 
 mod allowed_paths;
@@ -15,13 +15,13 @@ mod whitespace;
 mod workspace_classify;
 mod workspace_hack;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(long)]
+#[derive(Debug, Args)]
+pub struct LintArgs {
+    #[clap(long)]
     fail_fast: bool,
 }
 
-pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
+pub fn run(args: LintArgs, xctx: XContext) -> crate::Result<()> {
     let workspace_config = xctx.config().workspace_config();
 
     let project_linters: &[&dyn ProjectLinter] = &[

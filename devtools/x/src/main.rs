@@ -3,11 +3,27 @@
 
 #![forbid(unsafe_code)]
 
+use std::{boxed::Box, io::Write};
+
 use chrono::Local;
+use clap::{Parser, Subcommand};
 use env_logger::{self, fmt::Color};
 use log::Level;
-use std::{boxed::Box, io::Write};
-use structopt::StructOpt;
+
+use crate::clippy::ClippyArgs;
+use build::BuildArgs;
+use changed_since::ChangedSinceArgs;
+use check::CheckArgs;
+use diff_summary::DiffSummaryArgs;
+use fix::FixArgs;
+use fmt::FmtArgs;
+use generate_summaries::GenerateSummariesArgs;
+use generate_workspace_hack::GenerateWorkspaceHackArgs;
+use lint::LintArgs;
+use nextest::NextestArgs;
+use playground::PlaygroundArgs;
+use test::TestArgs;
+use tools::ToolsArgs;
 
 mod bench;
 mod build;
@@ -32,63 +48,78 @@ mod utils;
 
 type Result<T> = anyhow::Result<T>;
 
-#[derive(Debug, StructOpt)]
-struct Args {
-    #[structopt(subcommand)]
+#[derive(Debug, Parser)]
+#[clap(version)]
+struct Cli {
+    #[clap(subcommand)]
     cmd: Command,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Subcommand)]
 enum Command {
-    #[structopt(name = "bench")]
     /// Run `cargo bench`
-    Bench(bench::Args),
-    #[structopt(name = "build")]
+    #[clap(name = "bench")]
+    Bench(bench::BenchArgs),
+
     /// Run `cargo build`
     // the argument must be Boxed due to it's size and clippy (it's quite large by comparison to others.)
-    Build(Box<build::Args>),
-    #[structopt(name = "check")]
+    #[clap(name = "build")]
+    Build(Box<BuildArgs>),
+
     /// Run `cargo check`
-    Check(check::Args),
+    #[clap(name = "check")]
+    Check(CheckArgs),
+
     /// List packages changed since merge base with the given commit
     ///
     /// Note that this compares against the merge base (common ancestor) of the specified commit.
     /// For example, if origin/master is specified, the current working directory will be compared
     /// against the point at which it branched off of origin/master.
-    #[structopt(name = "changed-since")]
-    ChangedSince(changed_since::Args),
-    #[structopt(name = "clippy")]
+    #[clap(name = "changed-since")]
+    ChangedSince(ChangedSinceArgs),
+
     /// Run `cargo clippy`
-    Clippy(clippy::Args),
-    #[structopt(name = "fix")]
+    #[clap(name = "clippy")]
+    Clippy(ClippyArgs),
+
     /// Run `cargo fix`
-    Fix(fix::Args),
-    #[structopt(name = "fmt")]
+    #[clap(name = "fix")]
+    Fix(FixArgs),
+
     /// Run `cargo fmt`
-    Fmt(fmt::Args),
-    #[structopt(name = "test")]
+    #[clap(name = "fmt")]
+    Fmt(FmtArgs),
+
     /// Run tests
-    Test(test::Args),
-    #[structopt(name = "nextest")]
+    #[clap(name = "test")]
+    Test(TestArgs),
+
     /// Run tests with new test runner
-    Nextest(nextest::Args),
-    #[structopt(name = "tools")]
-    /// Run tests
-    Tools(tools::Args),
-    #[structopt(name = "lint")]
+    #[clap(name = "nextest")]
+    Nextest(NextestArgs),
+
+    /// Run tools
+    #[clap(name = "tools")]
+    Tools(ToolsArgs),
+
     /// Run lints
-    Lint(lint::Args),
+    #[clap(name = "lint")]
+    Lint(LintArgs),
+
     /// Run playground code
-    Playground(playground::Args),
-    #[structopt(name = "generate-summaries")]
+    Playground(PlaygroundArgs),
+
     /// Generate build summaries for important subsets
-    GenerateSummaries(generate_summaries::Args),
-    #[structopt(name = "diff-summary")]
+    #[clap(name = "generate-summaries")]
+    GenerateSummaries(GenerateSummariesArgs),
+
     /// Diff build summaries for important subsets
-    DiffSummary(diff_summary::Args),
-    #[structopt(name = "generate-workspace-hack")]
+    #[clap(name = "diff-summary")]
+    DiffSummary(DiffSummaryArgs),
+
     /// Update workspace-hack contents
-    GenerateWorkspaceHack(generate_workspace_hack::Args),
+    #[clap(name = "generate-workspace-hack")]
+    GenerateWorkspaceHack(GenerateWorkspaceHackArgs),
 }
 
 fn main() -> Result<()> {
@@ -113,10 +144,10 @@ fn main() -> Result<()> {
         })
         .init();
 
-    let args = Args::from_args();
+    let cli = Cli::parse();
     let xctx = context::XContext::new()?;
 
-    match args.cmd {
+    match cli.cmd {
         Command::Tools(args) => tools::run(args, xctx),
         Command::Test(args) => test::run(args, xctx),
         Command::Nextest(args) => nextest::run(args, xctx),

@@ -1,25 +1,26 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use clap::Args;
+
 use crate::{
-    cargo::{build_args::BuildArgs, selected_package::SelectedPackageArgs, CargoCommand},
+    cargo::{build_args::BuildArgsInner, selected_package::SelectedPackageArgs, CargoCommand},
     context::XContext,
     Result,
 };
 use std::ffi::OsString;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(flatten)]
+#[derive(Debug, Args)]
+pub struct ClippyArgs {
+    #[clap(flatten)]
     pub(crate) package_args: SelectedPackageArgs,
-    #[structopt(flatten)]
-    pub(crate) build_args: BuildArgs,
-    #[structopt(name = "ARGS", parse(from_os_str), last = true)]
+    #[clap(flatten)]
+    pub(crate) build_args: BuildArgsInner,
+    #[clap(name = "ARGS", parse(from_os_str), last = true)]
     args: Vec<OsString>,
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: ClippyArgs, xctx: XContext) -> Result<()> {
     let mut pass_through_args = vec!["-D".into(), "warnings".into()];
     for lint in xctx.config().allowed_clippy_lints() {
         pass_through_args.push("-A".into());

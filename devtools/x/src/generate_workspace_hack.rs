@@ -3,29 +3,27 @@
 
 use crate::{cargo::Cargo, context::XContext, Result};
 use anyhow::bail;
+use clap::{ArgEnum, Args};
 use log::info;
-use structopt::{clap::arg_enum, StructOpt};
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
+#[derive(Debug, Args)]
+pub struct GenerateWorkspaceHackArgs {
     /// Mode to run in
-    #[structopt(long, case_insensitive = true, possible_values = &WorkspaceHackMode::variants(), default_value = "write")]
+    #[clap(long, arg_enum, ignore_case = true, default_value_t = WorkspaceHackMode::Write)]
     mode: WorkspaceHackMode,
 }
 
-arg_enum! {
-    #[derive(Clone, Copy, Debug)]
-    /// Valid modes for generate-workspace-hack
-    pub enum WorkspaceHackMode {
-        Write,
-        Diff,
-        Check,
-        Verify,
-        Disable,
-    }
+#[derive(Clone, Copy, Debug, ArgEnum)]
+/// Valid modes for generate-workspace-hack
+pub enum WorkspaceHackMode {
+    Write,
+    Diff,
+    Check,
+    Verify,
+    Disable,
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: GenerateWorkspaceHackArgs, xctx: XContext) -> Result<()> {
     let hakari_builder = xctx.core().hakari_builder()?;
     let &hakari_package = hakari_builder
         .hakari_package()

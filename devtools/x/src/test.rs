@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    cargo::{build_args::BuildArgs, selected_package::SelectedPackageArgs, CargoCommand},
+    cargo::{build_args::BuildArgsInner, selected_package::SelectedPackageArgs, CargoCommand},
     context::XContext,
     utils::project_root,
     Result,
 };
 use anyhow::{anyhow, Error};
+use clap::Args;
 use log::info;
 use std::{
     ffi::OsString,
@@ -15,40 +16,39 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(flatten)]
+#[derive(Debug, Args)]
+pub struct TestArgs {
+    #[clap(flatten)]
     pub(crate) package_args: SelectedPackageArgs,
-    #[structopt(long, short)]
+    #[clap(long, short)]
     /// Skip running expensive diem testsuite integration tests
     unit: bool,
-    #[structopt(long)]
+    #[clap(long)]
     /// Only run doctests
     doc: bool,
-    #[structopt(flatten)]
-    pub(crate) build_args: BuildArgs,
-    #[structopt(long)]
+    #[clap(flatten)]
+    pub(crate) build_args: BuildArgsInner,
+    #[clap(long)]
     /// Do not fast fail the run if tests (or test executables) fail
     no_fail_fast: bool,
-    #[structopt(long)]
+    #[clap(long)]
     /// Do not run tests, only compile the test executables
     no_run: bool,
-    #[structopt(long, parse(from_os_str))]
+    #[clap(long, parse(from_os_str))]
     /// Directory to output HTML coverage report (using grcov)
     html_cov_dir: Option<PathBuf>,
-    #[structopt(long, parse(from_os_str))]
+    #[clap(long, parse(from_os_str))]
     /// Directory to output lcov coverage html (using grcov -> lcov.info -> html using genhtml).
     /// Only useful if you want the lcov.info file produced in the path.  Requires that lcov be installed and on PATH.
     html_lcov_dir: Option<PathBuf>,
-    #[structopt(name = "TESTNAME", parse(from_os_str))]
+    #[clap(name = "TESTNAME", parse(from_os_str))]
     testname: Option<OsString>,
-    #[structopt(name = "ARGS", parse(from_os_str), last = true)]
+    #[clap(name = "ARGS", parse(from_os_str), last = true)]
     args: Vec<OsString>,
 }
 
-pub fn run(mut args: Args, xctx: XContext) -> Result<()> {
+pub fn run(mut args: TestArgs, xctx: XContext) -> Result<()> {
     let config = xctx.config();
 
     let mut packages = args.package_args.to_selected_packages(&xctx)?;

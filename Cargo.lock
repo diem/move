@@ -439,10 +439,40 @@ dependencies = [
  "ansi_term 0.11.0",
  "atty",
  "bitflags",
- "strsim",
- "textwrap",
+ "strsim 0.8.0",
+ "textwrap 0.11.0",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "clap"
+version = "3.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5177fac1ab67102d8989464efd043c6ff44191b1557ec1ddd489b4f7e1447e77"
+dependencies = [
+ "atty",
+ "bitflags",
+ "clap_derive",
+ "indexmap",
+ "lazy_static 1.4.0",
+ "os_str_bytes",
+ "strsim 0.10.0",
+ "termcolor",
+ "textwrap 0.14.2",
+]
+
+[[package]]
+name = "clap_derive"
+version = "3.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "01d42c94ce7c2252681b5fed4d3627cc807b13dfc033246bd05d5b252399000e"
+dependencies = [
+ "heck 0.4.0",
+ "proc-macro-error",
+ "proc-macro2 1.0.28",
+ "quote 1.0.9",
+ "syn 1.0.74",
 ]
 
 [[package]]
@@ -565,7 +595,7 @@ checksum = "ab327ed7354547cc2ef43cbe20ef68b988e70b4b593cbd66a2a61733123a3d23"
 dependencies = [
  "atty",
  "cast",
- "clap",
+ "clap 2.33.3",
  "criterion-plot",
  "csv",
  "itertools 0.10.1",
@@ -1429,6 +1459,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "heck"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1860,12 +1896,12 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 name = "mirai-dataflow-analysis"
 version = "0.1.0"
 dependencies = [
+ "clap 3.1.2",
  "csv",
  "mirai-annotations",
  "regex",
  "serde 1.0.130",
  "serde_json",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -1891,7 +1927,7 @@ dependencies = [
  "bcs",
  "codespan-reporting",
  "datatest-stable",
- "heck",
+ "heck 0.3.2",
  "log",
  "move-bytecode-verifier",
  "move-command-line-common",
@@ -1908,12 +1944,12 @@ dependencies = [
 name = "move-analyzer"
 version = "0.0.0"
 dependencies = [
+ "clap 3.1.2",
  "lsp-server",
  "lsp-types",
  "move-command-line-common",
  "move-compiler",
  "serde_json",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -1989,13 +2025,13 @@ name = "move-bytecode-viewer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap 3.1.2",
  "move-binary-format",
  "move-bytecode-source-map",
  "move-command-line-common",
  "move-disassembler",
  "move-ir-types",
  "regex",
- "structopt 0.3.25",
  "termion",
  "tui",
  "workspace-hack",
@@ -2007,6 +2043,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
+ "clap 3.1.2",
  "codespan-reporting",
  "colored",
  "datatest-stable",
@@ -2038,7 +2075,6 @@ dependencies = [
  "read-write-set-dynamic",
  "serde 1.0.130",
  "serde_yaml",
- "structopt 0.3.25",
  "tempfile",
  "walkdir",
  "workspace-hack",
@@ -2063,6 +2099,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "bcs",
+ "clap 3.1.2",
  "codespan-reporting",
  "datatest-stable",
  "difference",
@@ -2081,7 +2118,6 @@ dependencies = [
  "once_cell",
  "petgraph 0.5.1",
  "regex",
- "structopt 0.3.25",
  "tempfile",
  "walkdir",
  "workspace-hack",
@@ -2122,6 +2158,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
+ "clap 3.1.2",
  "codespan",
  "colored",
  "move-binary-format",
@@ -2133,7 +2170,6 @@ dependencies = [
  "once_cell",
  "petgraph 0.5.1",
  "serde 1.0.130",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -2142,6 +2178,7 @@ name = "move-disassembler"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap 3.1.2",
  "colored",
  "move-binary-format",
  "move-bytecode-source-map",
@@ -2151,7 +2188,6 @@ dependencies = [
  "move-core-types",
  "move-coverage",
  "move-ir-types",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -2200,9 +2236,9 @@ name = "move-explain"
 version = "0.1.0"
 dependencies = [
  "bcs",
+ "clap 3.1.2",
  "move-command-line-common",
  "move-core-types",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -2212,6 +2248,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
+ "clap 3.1.2",
  "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
@@ -2221,7 +2258,6 @@ dependencies = [
  "move-ir-types",
  "move-symbol-pool",
  "serde_json",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -2314,6 +2350,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
+ "clap 3.1.2",
  "colored",
  "datatest-stable",
  "move-abigen",
@@ -2335,7 +2372,6 @@ dependencies = [
  "serde 1.0.130",
  "serde_yaml",
  "sha2",
- "structopt 0.3.25",
  "tempfile",
  "toml",
  "walkdir",
@@ -2349,7 +2385,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "atty",
- "clap",
+ "clap 2.33.3",
  "codespan",
  "codespan-reporting",
  "datatest-stable",
@@ -2487,6 +2523,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytecode-interpreter-crypto",
+ "clap 3.1.2",
  "codespan-reporting",
  "datatest-stable",
  "itertools 0.10.1",
@@ -2498,7 +2535,6 @@ dependencies = [
  "move-vm-runtime",
  "num 0.4.0",
  "serde 1.0.130",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -2546,7 +2582,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "atty",
- "clap",
+ "clap 3.1.2",
  "codespan",
  "codespan-reporting",
  "datatest-stable",
@@ -2579,7 +2615,6 @@ dependencies = [
  "sha3 0.9.1",
  "shell-words",
  "simplelog",
- "structopt 0.3.25",
  "tempfile",
  "tera",
  "tokio",
@@ -2626,6 +2661,7 @@ name = "move-unit-test"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap 3.1.2",
  "colored",
  "datatest-stable",
  "difference",
@@ -2643,7 +2679,6 @@ dependencies = [
  "move-vm-types",
  "rayon",
  "regex",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -3024,6 +3059,15 @@ checksum = "fb233f06c2307e1f5ce2ecad9f8121cffbbee2c95428f44ea85222e460d0d213"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "os_str_bytes"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -3438,7 +3482,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "clap",
+ "clap 2.33.3",
  "codespan-reporting",
  "datatest-stable",
  "hex",
@@ -3463,7 +3507,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "clap",
+ "clap 2.33.3",
  "codespan",
  "codespan-reporting",
  "datatest-stable",
@@ -4215,13 +4259,13 @@ name = "spec-flatten"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "clap 3.1.2",
  "itertools 0.10.1",
  "move-compiler",
  "move-model",
  "move-prover",
  "move-stackless-bytecode",
  "pretty",
- "structopt 0.3.25",
  "workspace-hack",
 ]
 
@@ -4253,12 +4297,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
+name = "strsim"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+
+[[package]]
 name = "structopt"
 version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16c2cdbf9cc375f15d1b4141bc48aeef444806655cd0e904207edc8d68d86ed7"
 dependencies = [
- "clap",
+ "clap 2.33.3",
  "structopt-derive 0.2.18",
 ]
 
@@ -4268,7 +4318,7 @@ version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40b9788f4202aa75c240ecc9c15c65185e6a39ccdeb0fd5d008b98825464c87c"
 dependencies = [
- "clap",
+ "clap 2.33.3",
  "lazy_static 1.4.0",
  "structopt-derive 0.4.18",
 ]
@@ -4279,7 +4329,7 @@ version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53010261a84b37689f9ed7d395165029f9cc7abb9f56bbfe86bee2597ed25107"
 dependencies = [
- "heck",
+ "heck 0.3.2",
  "proc-macro2 0.4.30",
  "quote 0.6.13",
  "syn 0.15.44",
@@ -4291,7 +4341,7 @@ version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
 dependencies = [
- "heck",
+ "heck 0.3.2",
  "proc-macro-error",
  "proc-macro2 1.0.28",
  "quote 1.0.9",
@@ -4443,6 +4493,7 @@ dependencies = [
 name = "test-generation"
 version = "0.1.0"
 dependencies = [
+ "clap 3.1.2",
  "crossbeam-channel",
  "getrandom 0.2.2",
  "hex",
@@ -4460,7 +4511,6 @@ dependencies = [
  "num_cpus",
  "once_cell",
  "rand 0.8.4",
- "structopt 0.3.25",
  "tracing",
  "tracing-subscriber",
  "workspace-hack",
@@ -4474,6 +4524,12 @@ checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 dependencies = [
  "unicode-width",
 ]
+
+[[package]]
+name = "textwrap"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0066c8d12af8b5acd21e00547c3797fde4e8677254a7ee429176ccebbe93dd80"
 
 [[package]]
 name = "thiserror"
@@ -5073,6 +5129,7 @@ dependencies = [
  "camino",
  "cargo_metadata",
  "chrono",
+ "clap 3.1.2",
  "colored-diff",
  "determinator",
  "env_logger",
@@ -5088,7 +5145,6 @@ dependencies = [
  "regex",
  "serde 1.0.130",
  "serde_json",
- "structopt 0.3.25",
  "supports-color",
  "toml",
  "x-core",

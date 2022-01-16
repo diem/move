@@ -1,29 +1,29 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 use crate::{
-    cargo::{build_args::BuildArgs, selected_package::SelectedPackageArgs, CargoCommand},
+    cargo::{build_args::BuildArgsInner, selected_package::SelectedPackageArgs, CargoCommand},
     context::XContext,
     Result,
 };
+use clap::Args;
 use log::info;
 use std::ffi::OsString;
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(flatten)]
+#[derive(Debug, Args)]
+pub struct BuildArgs {
+    #[clap(flatten)]
     package_args: SelectedPackageArgs,
-    #[structopt(flatten)]
-    build_args: BuildArgs,
-    #[structopt(long, parse(from_os_str))]
+    #[clap(flatten)]
+    build_args: BuildArgsInner,
+    #[clap(long, parse(from_os_str))]
     /// Copy final artifacts to this directory (unstable)
     out_dir: Option<OsString>,
-    #[structopt(long)]
+    #[clap(long)]
     /// Output the build plan in JSON (unstable)
     build_plan: bool,
 }
 
-pub fn convert_args(args: &Args) -> Vec<OsString> {
+pub fn convert_args(args: &BuildArgs) -> Vec<OsString> {
     let mut direct_args = Vec::new();
     args.build_args.add_args(&mut direct_args);
     if let Some(out_dir) = &args.out_dir {
@@ -37,7 +37,7 @@ pub fn convert_args(args: &Args) -> Vec<OsString> {
     direct_args
 }
 
-pub fn run(args: Box<Args>, xctx: XContext) -> Result<()> {
+pub fn run(args: Box<BuildArgs>, xctx: XContext) -> Result<()> {
     info!("Build plan: {}", args.build_plan);
 
     let direct_args = convert_args(&args);

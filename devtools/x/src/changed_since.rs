@@ -3,19 +3,19 @@
 
 use crate::{context::XContext, Result};
 use anyhow::Context;
+use clap::Args;
 use determinator::Determinator;
 use guppy::graph::{DependencyDirection, PackageSet};
 use log::trace;
-use structopt::StructOpt;
 use x_core::git::GitCli;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
+#[derive(Debug, Args)]
+pub struct ChangedSinceArgs {
     /// List packages changed since this commit
     pub(crate) base: String,
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: ChangedSinceArgs, xctx: XContext) -> Result<()> {
     let git_cli = xctx.core().git_cli().with_context(|| {
         "`x changed-since` must be run within a project cloned from a git repo."
     })?;

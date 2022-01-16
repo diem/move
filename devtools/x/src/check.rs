@@ -1,22 +1,23 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use clap::Args;
+
 use crate::{
-    cargo::{build_args::BuildArgs, selected_package::SelectedPackageArgs, CargoCommand},
+    cargo::{build_args::BuildArgsInner, selected_package::SelectedPackageArgs, CargoCommand},
     context::XContext,
     Result,
 };
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(flatten)]
+#[derive(Debug, Args)]
+pub struct CheckArgs {
+    #[clap(flatten)]
     pub(crate) package_args: SelectedPackageArgs,
-    #[structopt(flatten)]
-    pub(crate) build_args: BuildArgs,
+    #[clap(flatten)]
+    pub(crate) build_args: BuildArgsInner,
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: CheckArgs, xctx: XContext) -> Result<()> {
     let mut direct_args = vec![];
     args.build_args.add_args(&mut direct_args);
 

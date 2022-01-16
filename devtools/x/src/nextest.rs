@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    cargo::{build_args::BuildArgs, selected_package::SelectedPackageArgs, CargoCommand},
+    cargo::{build_args::BuildArgsInner, selected_package::SelectedPackageArgs, CargoCommand},
     context::XContext,
     Result,
 };
 use anyhow::{bail, Context};
 use camino::Utf8PathBuf;
+use clap::Args;
 use nextest_config::{NextestConfig, StatusLevel, TestOutputDisplay};
 use nextest_runner::{
     partition::PartitionerBuilder,
@@ -18,57 +19,56 @@ use nextest_runner::{
     SignalHandler,
 };
 use std::{ffi::OsString, io::Cursor};
-use structopt::StructOpt;
 use supports_color::Stream;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
+#[derive(Debug, Args)]
+pub struct NextestArgs {
     /// Nextest profile to use
-    #[structopt(long, short = "P")]
+    #[clap(long, short = 'P')]
     nextest_profile: Option<String>,
     /// Config file [default: workspace-root/.config/nextest.toml]
     config_file: Option<Utf8PathBuf>,
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub(crate) package_args: SelectedPackageArgs,
-    #[structopt(long, short)]
+    #[clap(long, short)]
     /// Skip running expensive diem testsuite integration tests
     unit: bool,
-    #[structopt(flatten)]
-    pub(crate) build_args: BuildArgs,
-    #[structopt(flatten)]
+    #[clap(flatten)]
+    pub(crate) build_args: BuildArgsInner,
+    #[clap(flatten)]
     pub(crate) runner_opts: TestRunnerOpts,
-    #[structopt(flatten)]
+    #[clap(flatten)]
     reporter_opts: TestReporterOpts,
-    #[structopt(long)]
+    #[clap(long)]
     /// Do not run tests, only compile the test executables
     no_run: bool,
     /// Run ignored tests
-    #[structopt(long, possible_values = &RunIgnored::variants(), default_value, case_insensitive = true)]
+    #[clap(long, possible_values = RunIgnored::variants(), default_value_t, ignore_case = true)]
     run_ignored: RunIgnored,
     /// Test partition, e.g. hash:1/2 or count:2/3
-    #[structopt(long)]
+    #[clap(long)]
     partition: Option<PartitionerBuilder>,
-    #[structopt(name = "FILTERS", last = true)]
+    #[clap(name = "FILTERS", last = true)]
     filters: Vec<String>,
 }
 
 /// Test runner options.
-#[derive(Debug, Default, StructOpt)]
+#[derive(Debug, Default, Args)]
 pub struct TestRunnerOpts {
     /// Number of retries for failing tests [default: from profile]
-    #[structopt(long)]
+    #[clap(long)]
     retries: Option<usize>,
 
     /// Cancel test run on the first failure
-    #[structopt(long)]
+    #[clap(long)]
     fail_fast: bool,
 
     /// Run all tests regardless of failure
-    #[structopt(long, overrides_with = "fail-fast")]
+    #[clap(long, overrides_with = "fail-fast")]
     no_fail_fast: bool,
 
     /// Number of tests to run simultaneously [default: logical CPU count]
-    #[structopt(long)]
+    #[clap(long)]
     test_threads: Option<usize>,
 }
 
@@ -91,17 +91,16 @@ impl TestRunnerOpts {
     }
 }
 
-#[derive(Debug, Default, StructOpt)]
-#[structopt(rename_all = "kebab-case")]
+#[derive(Debug, Default, Args)]
 pub struct TestReporterOpts {
     /// Output stdout and stderr on failure
-    #[structopt(long, possible_values = TestOutputDisplay::variants(), case_insensitive = true)]
+    #[clap(long, possible_values = TestOutputDisplay::variants(), ignore_case = true)]
     failure_output: Option<TestOutputDisplay>,
     /// Output stdout and stderr on success
-    #[structopt(long, possible_values = TestOutputDisplay::variants(), case_insensitive = true)]
+    #[clap(long, possible_values = TestOutputDisplay::variants(), ignore_case = true)]
     success_output: Option<TestOutputDisplay>,
     /// Test statuses to output
-    #[structopt(long, possible_values = StatusLevel::variants(), case_insensitive = true)]
+    #[clap(long, possible_values = StatusLevel::variants(), ignore_case = true)]
     status_level: Option<StatusLevel>,
 }
 
@@ -121,7 +120,7 @@ impl TestReporterOpts {
     }
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: NextestArgs, xctx: XContext) -> Result<()> {
     let config = xctx.config();
 
     let mut packages = args.package_args.to_selected_packages(&xctx)?;

@@ -12,7 +12,7 @@
 
 use crate::context::XContext;
 use anyhow::anyhow;
-use structopt::StructOpt;
+use clap::Args;
 use x_lint::prelude::*;
 
 #[derive(Copy, Clone, Debug)]
@@ -101,14 +101,14 @@ impl ContentLinter for PlaygroundContent {
 
 // ---
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
+#[derive(Debug, Args)]
+pub struct PlaygroundArgs {
     /// Dummy arg that doesn't do anything
-    #[structopt(long)]
+    #[clap(long)]
     dummy: bool,
 }
 
-pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
+pub fn run(args: PlaygroundArgs, xctx: XContext) -> crate::Result<()> {
     let engine = LintEngineConfig::new(xctx.core())
         .with_project_linters(&[&PlaygroundProject])
         .with_package_linters(&[&PlaygroundPackage])

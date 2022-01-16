@@ -1,9 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::collections::BTreeMap;
+
 use anyhow::{anyhow, Result};
-use std::{collections::BTreeMap, str::FromStr};
-use structopt::StructOpt;
+use clap::{ArgEnum, Parser};
 
 use move_model::ast::SpecBlockTarget;
 use move_stackless_bytecode::function_target_pipeline::{FunctionVariant, VerificationFlavor};
@@ -18,40 +19,30 @@ use ast_print::SpecPrinter;
 use workflow::WorkflowOptions;
 
 /// List of simplification passes available
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, ArgEnum)]
+#[clap(rename_all = "snake_case")]
 pub enum FlattenPass {
     TrimAbortsIf,
 }
 
-impl FromStr for FlattenPass {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let r = match s {
-            "trim_aborts_if" => FlattenPass::TrimAbortsIf,
-            _ => return Err(s.to_string()),
-        };
-        Ok(r)
-    }
-}
-
-/// Options passed into the specification flattening tool.
-#[derive(StructOpt, Clone)]
+// Options passed into the specification flattening tool.
+#[derive(Parser, Clone)]
+#[clap(version)]
 pub struct FlattenOptions {
     /// Options common and shared by the proving workflow and all passes
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub workflow: WorkflowOptions,
 
     /// Spec flattening pipeline
-    #[structopt(short = "f", long = "flatten")]
+    #[clap(short = 'f', long = "flatten", arg_enum)]
     pub flattening_pipeline: Vec<FlattenPass>,
 
     /// Dump stepwise result
-    #[structopt(long = "dump-stepwise")]
+    #[clap(long = "dump-stepwise")]
     pub dump_stepwise: bool,
 
     /// Dump stepwise result in raw exp printing format
-    #[structopt(long = "dump-stepwise-raw", requires = "dump-stepwise")]
+    #[clap(long = "dump-stepwise-raw", requires = "dump-stepwise")]
     pub dump_stepwise_raw: bool,
 }
 

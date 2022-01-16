@@ -1,6 +1,8 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use clap::Parser;
+
 use lsp_server::{Connection, Message, Notification, Request, Response};
 use lsp_types::{
     notification::Notification as _, request::Request as _, CompletionOptions, SaveOptions,
@@ -12,16 +14,16 @@ use move_analyzer::{
     context::Context,
     vfs::{on_text_document_sync_notification, VirtualFileSystem},
 };
-use structopt::StructOpt;
 
-#[derive(StructOpt)]
-#[structopt(name = "move-analyzer", about = "A language server for Move")]
+/// A language server for Move
+#[derive(Parser)]
+#[clap(version, name = "move-analyzer")]
 struct Options {}
 
 fn main() {
-    // For now, move-analyzer only responds to options built-in to structopt,
+    // For now, move-analyzer only responds to options built-in to clap,
     // such as `--help` or `--version`.
-    Options::from_args();
+    Options::parse();
 
     // stdio is used to communicate Language Server Protocol requests and responses.
     // stderr is used for logging (and, when Visual Studio Code is used to communicate with this

@@ -2,33 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::context::XContext;
+use clap::{ArgEnum, Args};
 use guppy::graph::summaries::{diff::SummaryDiff, Summary};
 use std::{fs, path::PathBuf};
-use structopt::{clap::arg_enum, StructOpt};
 
-arg_enum! {
-    #[derive(Debug, Copy, Clone)]
-    pub enum OutputFormat {
-        Toml,
-        Json,
-        Text,
-    }
+#[derive(Debug, Copy, Clone, ArgEnum)]
+pub enum OutputFormat {
+    Toml,
+    Json,
+    Text,
 }
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(name = "BASE_SUMMARY")]
+#[derive(Debug, Args)]
+pub struct DiffSummaryArgs {
+    #[clap(name = "BASE_SUMMARY")]
     /// Path to the base summary
     base_summary: PathBuf,
-    #[structopt(name = "COMPARE_SUMMARY")]
+    #[clap(name = "COMPARE_SUMMARY")]
     /// Path to the comparison summary
     compare_summary: PathBuf,
-    #[structopt(name = "OUTPUT_FORMAT", default_value = "Text")]
+    #[clap(name = "OUTPUT_FORMAT", arg_enum, default_value_t = OutputFormat::Text)]
     /// optionally, output can be formated as json or toml
     output_format: OutputFormat,
 }
 
-pub fn run(args: Args, _xctx: XContext) -> crate::Result<()> {
+pub fn run(args: DiffSummaryArgs, _xctx: XContext) -> crate::Result<()> {
     let base_summary_text = fs::read_to_string(&args.base_summary)?;
     let base_summary = Summary::parse(&base_summary_text)?;
     let compare_summary_text = fs::read_to_string(&args.compare_summary)?;

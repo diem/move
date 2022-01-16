@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use std::ffi::OsString;
-use structopt::{clap::arg_enum, StructOpt};
+
+use clap::{ArgEnum, Args};
 use supports_color::Stream;
 
-arg_enum! {
-    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-    pub enum Coloring {
-        Auto,
-        Always,
-        Never,
-    }
+#[derive(Copy, Clone, Debug, Eq, PartialEq, ArgEnum)]
+pub enum Coloring {
+    Auto,
+    Always,
+    Never,
 }
 
 impl Coloring {
@@ -26,89 +25,89 @@ impl Coloring {
 }
 
 /// Arguments for controlling cargo build and other similar commands (like check).
-#[derive(Debug, StructOpt)]
-pub struct BuildArgs {
-    #[structopt(long, short)]
+#[derive(Debug, Args)]
+pub struct BuildArgsInner {
     /// No output printed to stdout
+    #[clap(long, short)]
     pub(crate) quiet: bool,
-    #[structopt(long, short)]
     /// Number of parallel build jobs, defaults to # of CPUs
+    #[clap(long, short)]
     pub(crate) jobs: Option<u16>,
-    #[structopt(long)]
     /// Only this package's library
+    #[clap(long)]
     pub(crate) lib: bool,
-    #[structopt(long, number_of_values = 1)]
     /// Only the specified binary
+    #[clap(long, number_of_values = 1)]
     pub(crate) bin: Vec<String>,
-    #[structopt(long)]
     /// All binaries
+    #[clap(long)]
     pub(crate) bins: bool,
-    #[structopt(long, number_of_values = 1)]
     /// Only the specified example
+    #[clap(long, number_of_values = 1)]
     pub(crate) example: Vec<String>,
-    #[structopt(long)]
     /// All examples
+    #[clap(long)]
     pub(crate) examples: bool,
-    #[structopt(long, number_of_values = 1)]
     /// Only the specified test target
+    #[clap(long, number_of_values = 1)]
     pub(crate) test: Vec<String>,
-    #[structopt(long)]
     /// All tests
+    #[clap(long)]
     pub(crate) tests: bool,
-    #[structopt(long, number_of_values = 1)]
     /// Only the specified bench target
+    #[clap(long, number_of_values = 1)]
     pub(crate) bench: Vec<String>,
-    #[structopt(long)]
     /// All benches
+    #[clap(long)]
     pub(crate) benches: bool,
-    #[structopt(long)]
     /// All targets
+    #[clap(long)]
     pub(crate) all_targets: bool,
-    #[structopt(long)]
     /// Artifacts in release mode, with optimizations
+    #[clap(long)]
     pub(crate) release: bool,
-    #[structopt(long)]
     /// Artifacts with the specified profile
+    #[clap(long)]
     pub(crate) profile: Option<String>,
-    #[structopt(long, number_of_values = 1)]
     /// Space-separated list of features to activate
+    #[clap(long, number_of_values = 1)]
     pub(crate) features: Vec<String>,
-    #[structopt(long)]
     /// Activate all available features
+    #[clap(long)]
     pub(crate) all_features: bool,
-    #[structopt(long)]
     /// Do not activate the `default` feature
+    #[clap(long)]
     pub(crate) no_default_features: bool,
-    #[structopt(long)]
     /// TRIPLE
+    #[clap(long)]
     pub(crate) target: Option<String>,
-    #[structopt(long, parse(from_os_str))]
     /// Directory for all generated artifacts
+    #[clap(long, parse(from_os_str))]
     pub(crate) target_dir: Option<OsString>,
-    #[structopt(long, parse(from_os_str))]
     /// Path to Cargo.toml
+    #[clap(long, parse(from_os_str))]
     pub(crate) manifest_path: Option<OsString>,
-    #[structopt(long)]
     /// Error format
+    #[clap(long)]
     pub(crate) message_format: Option<String>,
-    #[structopt(long, short, parse(from_occurrences))]
     /// Use verbose output (-vv very verbose/build.rs output)
+    #[clap(long, short, parse(from_occurrences))]
     pub(crate) verbose: usize,
-    #[structopt(long, possible_values = &Coloring::variants(), default_value="Auto")]
     /// Coloring: auto, always, never
+    #[clap(long, arg_enum, default_value_t = Coloring::Auto)]
     pub(crate) color: Coloring,
-    #[structopt(long)]
     /// Require Cargo.lock and cache are up to date
+    #[clap(long)]
     pub(crate) frozen: bool,
-    #[structopt(long)]
     /// Require Cargo.lock is up to date
+    #[clap(long)]
     pub(crate) locked: bool,
-    #[structopt(long)]
     /// Run without accessing the network
+    #[clap(long)]
     pub(crate) offline: bool,
 }
 
-impl BuildArgs {
+impl BuildArgsInner {
     pub fn add_args(&self, direct_args: &mut Vec<OsString>) {
         if self.quiet {
             direct_args.push(OsString::from("--quiet"));
@@ -203,9 +202,14 @@ impl BuildArgs {
         if self.verbose > 0 {
             direct_args.push(OsString::from(format!("-{}", "v".repeat(self.verbose))));
         };
-        if self.color.to_string() != Coloring::Auto.to_string() {
+        if self.color != Coloring::Auto {
+            let color = match self.color {
+                Coloring::Always => "always",
+                Coloring::Never => "never",
+                _ => unreachable!(),
+            };
             direct_args.push(OsString::from("--color"));
-            direct_args.push(OsString::from(self.color.to_string()));
+            direct_args.push(OsString::from(color));
         };
         if self.frozen {
             direct_args.push(OsString::from("--frozen"));

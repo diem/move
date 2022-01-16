@@ -3,16 +3,16 @@
 
 use crate::{context::XContext, Result};
 use anyhow::anyhow;
-use structopt::StructOpt;
+use clap::Args;
 
-#[derive(Debug, StructOpt)]
-pub struct Args {
-    #[structopt(long)]
+#[derive(Debug, Args)]
+pub struct ToolsArgs {
+    #[clap(long)]
     /// Run in 'check' mode. Exits with 0 if all tools installed. Exits with 1 and if not, printing failed
     check: bool,
 }
 
-pub fn run(args: Args, xctx: XContext) -> Result<()> {
+pub fn run(args: ToolsArgs, xctx: XContext) -> Result<()> {
     let success = match args.check {
         false => xctx.installer().install_all(),
         true => xctx.installer().check_all(),

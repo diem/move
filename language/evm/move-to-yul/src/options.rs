@@ -3,26 +3,27 @@
 
 use codespan_reporting::diagnostic::Severity;
 use move_command_line_common::env::read_env_var;
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "move-to-yul", about = "Move Solidity Generator")]
+/// Move Solidity Generator
+#[derive(Parser, Debug)]
+#[clap(version, name = "move-to-yul")]
 pub struct Options {
     /// Directories where to lookup dependencies.
-    #[structopt(short)]
+    #[clap(short)]
     pub dependencies: Vec<String>,
     /// Named address mapping.
-    #[structopt(short)]
+    #[clap(short)]
     pub named_address_mapping: Vec<String>,
     /// Output file name.
-    #[structopt(short)]
-    #[structopt(long)]
+    #[clap(short)]
+    #[clap(long)]
     pub output: String,
     /// Solc executable
-    #[structopt(long)]
+    #[clap(long)]
     pub solc_exe: String,
     /// Whether to dump bytecode to a file.
-    #[structopt(long = "dump-bytecode")]
+    #[clap(long = "dump-bytecode")]
     pub dump_bytecode: bool,
     /// Sources to compile (positional arg)
     pub sources: Vec<String>,
