@@ -24,4 +24,9 @@ impl Experiment {
     /// during tests this is off.
     /// Retention: permanent
     pub const CAPTURE_SOURCE_INFO: &'static str = "capture-source-info";
+
+    /// Transform control flow graph to structured control flow.
+    /// This is off by default for now, we might want to make it default
+    /// if the performance improvement is significant.
+    pub const APPLY_CFG_TO_SCF: &'static str = "apply-cfg-to-scf";
 }
