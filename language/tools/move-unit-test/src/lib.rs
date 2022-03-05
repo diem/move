@@ -21,6 +21,7 @@ use std::{
     marker::Send,
     sync::Mutex,
 };
+
 use structopt::*;
 
 #[derive(Debug, StructOpt, Clone)]

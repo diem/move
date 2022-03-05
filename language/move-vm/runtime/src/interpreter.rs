@@ -6,6 +6,7 @@ use crate::{
     native_functions::NativeContext,
     trace,
 };
+
 use fail::fail_point;
 use move_binary_format::{
     errors::*,
