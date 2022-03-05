@@ -115,14 +115,6 @@ impl VMError {
         self.message.as_ref()
     }
 
-    pub fn stacktrace(&self) -> Option<&String> {
-        self.stacktrace.as_ref()
-    }
-
-    pub fn remove_stacktrace(&mut self) {
-        self.stacktrace = None;
-    }
-
     pub fn location(&self) -> &Location {
         &self.location
     }

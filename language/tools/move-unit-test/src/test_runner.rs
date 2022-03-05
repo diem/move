@@ -198,18 +198,13 @@ impl SharedTestingConfig {
         // TODO: collect VM logs if the verbose flag (i.e, `self.verbose`) is set
 
         let now = Instant::now();
-        let mut return_result = session.execute_function(
+        let return_result = session.execute_function(
             &test_plan.module_id,
             IdentStr::new(function_name).unwrap(),
             vec![], // no ty args, at least for now
             serialize_values(test_info.arguments.iter()),
             &mut gas_meter,
         );
-        if !self.report_stacktrace_on_abort {
-            if let Err(err) = &mut return_result {
-                err.remove_stacktrace();
-            }
-        }
         let test_run_info = TestRunInfo::new(
             function_name.to_string(),
             now.elapsed(),

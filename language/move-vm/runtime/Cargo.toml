@@ -38,4 +38,3 @@ move-compiler = { path = "../../move-compiler" }
 default = []
 fuzzing = ["move-vm-types/fuzzing"]
 failpoints = ["fail/failpoints"]
-testing = []
