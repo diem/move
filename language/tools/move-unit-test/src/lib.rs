@@ -214,7 +214,6 @@ impl UnitTestingConfig {
         if self.report_statistics {
             test_results.report_statistics(&shared_writer)?;
         }
-
         let all_tests_passed = test_results.summarize(&shared_writer)?;
 
         let writer = shared_writer.into_inner().unwrap();

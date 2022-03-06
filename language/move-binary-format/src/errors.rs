@@ -137,7 +137,6 @@ impl VMError {
         StatusCode,
         Option<u64>,
         Option<String>,
-        Option<String>,
         Location,
         Vec<(IndexKind, TableIndex)>,
         Vec<(FunctionDefinitionIndex, CodeOffset)>,
@@ -146,7 +145,7 @@ impl VMError {
             major_status,
             sub_status,
             message,
-            stacktrace,
+            stacktrace: _,
             location,
             indices,
             offsets,
@@ -155,7 +154,6 @@ impl VMError {
             major_status,
             sub_status,
             message,
-            stacktrace,
             location,
             indices,
             offsets,
@@ -180,7 +178,6 @@ impl PartialVMError {
         StatusCode,
         Option<u64>,
         Option<String>,
-        Option<String>,
         Vec<(IndexKind, TableIndex)>,
         Vec<(FunctionDefinitionIndex, CodeOffset)>,
     ) {
@@ -188,18 +185,11 @@ impl PartialVMError {
             major_status,
             sub_status,
             message,
-            stacktrace,
+            stacktrace: _,
             indices,
             offsets,
         } = self;
-        (
-            major_status,
-            sub_status,
-            message,
-            stacktrace,
-            indices,
-            offsets,
-        )
+        (major_status, sub_status, message, indices, offsets)
     }
 
     pub fn finish(self, location: Location) -> VMError {

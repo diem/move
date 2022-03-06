@@ -20,7 +20,6 @@ pub fn expect_no_verification_errors(err: VMError) -> VMError {
                 _old_status,
                 _old_sub_status,
                 _old_message,
-                _stacktrace,
                 location,
                 indices,
                 offsets,

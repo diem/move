@@ -124,7 +124,7 @@ pub fn native_swap(
 }
 
 fn native_error_to_abort(err: PartialVMError) -> PartialVMError {
-    let (major_status, sub_status_opt, message_opt, _stacktrace_opt, indices, offsets) =
+    let (major_status, sub_status_opt, message_opt, indices, offsets) =
         err.all_data();
     let new_err = match major_status {
         StatusCode::VECTOR_OPERATION_ERROR => PartialVMError::new(StatusCode::ABORTED),
