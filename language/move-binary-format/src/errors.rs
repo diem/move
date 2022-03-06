@@ -253,14 +253,6 @@ impl PartialVMError {
         }
     }
 
-    pub fn with_stacktrace(self, stacktrace: String) -> Self {
-        debug_assert!(self.stacktrace.is_none());
-        Self {
-            stacktrace: Some(stacktrace),
-            ..self
-        }
-    }
-
     pub fn at_index(self, kind: IndexKind, index: TableIndex) -> Self {
         let mut indices = self.indices;
         indices.push((kind, index));

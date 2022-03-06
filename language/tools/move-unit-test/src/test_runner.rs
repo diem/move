@@ -40,7 +40,6 @@ use std::{collections::BTreeMap, io::Write, marker::Send, sync::Mutex, time::Ins
 /// Test state common to all tests
 pub struct SharedTestingConfig {
     save_storage_state_on_failure: bool,
-    report_stacktrace_on_abort: bool,
     execution_bound: u64,
     cost_table: CostTable,
     native_function_table: NativeFunctionTable,
@@ -119,7 +118,6 @@ impl TestRunner {
         check_stackless_vm: bool,
         verbose: bool,
         save_storage_state_on_failure: bool,
-        report_stacktrace_on_abort: bool,
         tests: TestPlan,
         native_function_table: Option<NativeFunctionTable>,
         named_address_values: BTreeMap<String, NumericalAddress>,
@@ -138,7 +136,6 @@ impl TestRunner {
         Ok(Self {
             testing_config: SharedTestingConfig {
                 save_storage_state_on_failure,
-                report_stacktrace_on_abort,
                 starting_storage_state,
                 execution_bound,
                 native_function_table,
