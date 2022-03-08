@@ -1,7 +1,7 @@
 #[actor]
 module 0x44::IncrDecr {
 
-    use Jazz::Jazz::{Cont, yield};
+    use Jazz::Cont::{Cont, yield};
 
     const MAX: u64 = 43;
 
@@ -59,4 +59,14 @@ module 0x44::IncrDecr {
 
     #[generated_by_jazz]
     native fun cont_xfer_decr(v: u64, cont: Cont<bool>): Cont<bool>;
+}
+
+/// Jazz supporting modules.
+module Jazz::Cont {
+
+    /// A type which represents a continuation.
+    native struct Cont<T> has drop;
+
+    /// Yield execution to the given continuation.
+    public native fun yield<T>(cont: Cont<T>, result: T);
 }
