@@ -239,6 +239,11 @@ globs = ["language/evm/examples/**/*", "language/evm/stdlib/**/*"]
 mark-changed = []
 
 [[determinator.path-rule]]
+# Ignore files in the language/evm/examples tree (for now)
+globs = ["language/jmv/examples/**/*"]
+mark-changed = []
+
+[[determinator.path-rule]]
 # On changes to files related to VS Code, build the move-analyzer package.
 globs = [".vscode/**/*", "language/move-analyzer/editors/code/**/*.json"]
 mark-changed = ["move-analyzer"]
