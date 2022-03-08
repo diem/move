@@ -18,21 +18,21 @@ pub const CORE_CODE_ADDRESS: AccountAddress = AccountAddress::ONE;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Hash, Eq, Clone, PartialOrd, Ord)]
 pub enum TypeTag {
-    #[serde(rename = "bool")]
+    #[serde(rename = "bool", alias = "Bool")]
     Bool,
-    #[serde(rename = "u8")]
+    #[serde(rename = "u8", alias = "U8")]
     U8,
-    #[serde(rename = "u64")]
+    #[serde(rename = "u64", alias = "U64")]
     U64,
-    #[serde(rename = "u128")]
+    #[serde(rename = "u128", alias = "U128")]
     U128,
-    #[serde(rename = "address")]
+    #[serde(rename = "address", alias = "Address")]
     Address,
-    #[serde(rename = "signer")]
+    #[serde(rename = "signer", alias = "Signer")]
     Signer,
-    #[serde(rename = "vector")]
+    #[serde(rename = "vector", alias = "Vector")]
     Vector(Box<TypeTag>),
-    #[serde(rename = "struct")]
+    #[serde(rename = "struct", alias = "Struct")]
     Struct(StructTag),
 }
 
@@ -42,7 +42,7 @@ pub struct StructTag {
     pub module: Identifier,
     pub name: Identifier,
     // TODO: rename to "type_args" (or better "ty_args"?)
-    #[serde(rename = "type_args")]
+    #[serde(rename = "type_args", alias = "type_params")]
     pub type_params: Vec<TypeTag>,
 }
 
