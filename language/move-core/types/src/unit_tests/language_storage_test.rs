@@ -26,12 +26,12 @@ fn test_type_tag_deserialize_case_insensitive() {
     let upper_case_json = r#"
     {"address":"0x00000000000000000000000000000001","module":"TestModule","name":"TestStruct","type_params":["U8","U64","U128","Bool","Address","Signer"]}
     "#;
-    let upper_case_decoded = serde_json::from_str(&upper_case_json).unwrap();
+    let upper_case_decoded = serde_json::from_str(upper_case_json).unwrap();
     assert_eq!(org_struct_tag, upper_case_decoded);
 
     let lower_case_json = r#"
     {"address":"0x00000000000000000000000000000001","module":"TestModule","name":"TestStruct","type_args":["u8","u64","u128","bool","address","signer"]}
     "#;
-    let lower_case_decoded = serde_json::from_str(&lower_case_json).unwrap();
+    let lower_case_decoded = serde_json::from_str(lower_case_json).unwrap();
     assert_eq!(org_struct_tag, lower_case_decoded);
 }
