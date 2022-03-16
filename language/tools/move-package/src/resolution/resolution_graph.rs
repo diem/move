@@ -477,7 +477,9 @@ impl ResolvingGraph {
 
     fn download_and_update_if_repo(dep_name: PackageName, dep: &Dependency) -> Result<()> {
         if let Some(git_info) = &dep.git_info {
-            if !git_info.download_to.exists() {
+            // NOTE: This lock is added to support loading of dependencies in multi-threaded mode.
+            // Only one thread should be able to execute fetching of the git dependency to prevent invalid state.
+            if let Some(lock) = get_lock_if_no_dependency(&git_info.download_to)? {
                 Command::new("git")
                     .args([
                         "clone",
@@ -503,6 +505,8 @@ impl ResolvingGraph {
                             dep_name
                         )
                     })?;
+
+                lock.release()?;
             }
         }
         Ok(())
@@ -709,5 +713,37 @@ impl ResolvedPackage {
                 }
             })
             .collect()
+    }
+}
+
+/// Get a lock if the dependency does not exist. Return Ok(Some(Lockfile))
+/// If the lock is on, then wait for the removal. Return: Ok(None)
+/// If the dependency is downloaded then no action is required. Return: Ok(None)
+fn get_lock_if_no_dependency(dir_path: &Path) -> Result<Option<lockfile::Lockfile>> {
+    let lock_path = dir_path.with_extension("lock");
+    if dir_path.exists() {
+        if lock_path.exists() {
+            let mut time_limit = 300;
+            let sleep_time = std::time::Duration::from_secs(1);
+            loop {
+                std::thread::sleep(sleep_time);
+                if !lock_path.exists() {
+                    break;
+                }
+                time_limit -= 1;
+                if time_limit == 0 {
+                    bail!("Waiting time has expired");
+                }
+            }
+        }
+        return Ok(None);
+    }
+
+    match lockfile::Lockfile::create(&lock_path) {
+        Ok(lock) => Ok(Some(lock)),
+        Err(err) => match err {
+            lockfile::Error::LockTaken => get_lock_if_no_dependency(dir_path),
+            _ => bail!("File Lock Error: {} {:?}", lock_path.display(), err),
+        },
     }
 }

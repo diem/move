@@ -17,13 +17,13 @@ use crate::{
     MatchedFileCommentMap,
 };
 
-struct Context<'env, 'lexer, 'input> {
-    env: &'env mut CompilationEnv,
-    tokens: &'lexer mut Lexer<'input>,
+pub struct Context<'env, 'lexer, 'input> {
+    pub env: &'env mut CompilationEnv,
+    pub tokens: &'lexer mut Lexer<'input>,
 }
 
 impl<'env, 'lexer, 'input> Context<'env, 'lexer, 'input> {
-    fn new(env: &'env mut CompilationEnv, tokens: &'lexer mut Lexer<'input>) -> Self {
+    pub fn new(env: &'env mut CompilationEnv, tokens: &'lexer mut Lexer<'input>) -> Self {
         Self { env, tokens }
     }
 }
@@ -109,7 +109,7 @@ fn match_token(tokens: &mut Lexer, tok: Tok) -> Result<bool, Diagnostic> {
 }
 
 // Check for the specified token and return an error if it does not match.
-fn consume_token(tokens: &mut Lexer, tok: Tok) -> Result<(), Diagnostic> {
+pub fn consume_token(tokens: &mut Lexer, tok: Tok) -> Result<(), Diagnostic> {
     consume_token_(tokens, tok, tokens.start_loc(), "")
 }
 
@@ -288,7 +288,7 @@ fn parse_identifier(context: &mut Context) -> Result<Name, Diagnostic> {
 
 // Parse a numerical address value
 //     NumericalAddress = <Number>
-fn parse_address_bytes(context: &mut Context) -> Result<Spanned<NumericalAddress>, Diagnostic> {
+pub fn parse_address_bytes(context: &mut Context) -> Result<Spanned<NumericalAddress>, Diagnostic> {
     let loc = current_token_loc(context.tokens);
     let addr_res = NumericalAddress::parse_str(context.tokens.content());
     consume_token(context.tokens, Tok::NumValue)?;
@@ -1568,7 +1568,7 @@ fn make_builtin_call(loc: Loc, name: Symbol, type_args: Option<Vec<Type>>, args:
 //          | "&mut" <Type>
 //          | "|" Comma<Type> "|" Type   (spec only)
 //          | "(" Comma<Type> ")"
-fn parse_type(context: &mut Context) -> Result<Type, Diagnostic> {
+pub fn parse_type(context: &mut Context) -> Result<Type, Diagnostic> {
     let start_loc = context.tokens.start_loc();
     let t = match context.tokens.peek() {
         Tok::LParen => {

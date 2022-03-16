@@ -37,6 +37,7 @@ const MULTISET_ARRAY_THEORY: &[u8] = include_bytes!("prelude/multiset-array-theo
 
 const BCS_MODULE: &str = "0x1::BCS";
 const EVENT_MODULE: &str = "0x1::Event";
+const REFLECT_MODULE: &str = "0x1::Reflect";
 
 mod boogie_helpers;
 pub mod boogie_wrapper;
@@ -121,6 +122,8 @@ pub fn add_prelude(
     context.insert("bcs_instances", &bcs_instances);
     let event_instances = filter_native(EVENT_MODULE);
     context.insert("event_instances", &event_instances);
+    let reflect_instances = filter_native(REFLECT_MODULE);
+    context.insert("reflect_instances", &reflect_instances);
 
     let expanded_content = tera.render("prelude", &context)?;
     emitln!(writer, &expanded_content);

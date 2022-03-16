@@ -31,6 +31,8 @@ bcs = "0.1.2"
 move-command-line-common = { path = "../move-command-line-common" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
+pontem = { path = "../../pontem" }
+
 [dev-dependencies]
 move-stdlib = { path = "../move-stdlib" }
 datatest-stable = "0.1.1"

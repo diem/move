@@ -3,7 +3,7 @@
 
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum CompiledPackageLayout {
     BuildInfo,
     Root,

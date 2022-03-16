@@ -115,4 +115,11 @@ impl<'a> NativeContext<'a> {
             Err(_) => Ok(None),
         }
     }
+
+    pub fn type_to_type_tag(
+        &self,
+        ty: &Type,
+    ) -> PartialVMResult<move_core_types::language_storage::TypeTag> {
+        self.resolver.type_to_type_tag(ty)
+    }
 }

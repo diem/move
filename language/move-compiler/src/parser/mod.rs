@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pub mod lexer;
-pub(crate) mod syntax;
+pub mod syntax;
 
 pub mod ast;
 pub mod comments;
@@ -26,7 +26,7 @@ use std::{
     io::Read,
 };
 
-pub(crate) fn parse_program(
+pub fn parse_program(
     compilation_env: &mut CompilationEnv,
     named_address_maps: NamedAddressMaps,
     targets: Vec<AddressScopedFileIndexed>,
@@ -90,7 +90,7 @@ pub(crate) fn parse_program(
     Ok((files, res))
 }
 
-fn ensure_targets_deps_dont_intersect(
+pub fn ensure_targets_deps_dont_intersect(
     compilation_env: &CompilationEnv,
     targets: &[(Symbol, NamedAddressMapIndex)],
     deps: &mut Vec<(Symbol, NamedAddressMapIndex)>,
@@ -130,7 +130,7 @@ fn ensure_targets_deps_dont_intersect(
     ))
 }
 
-fn parse_file(
+pub fn parse_file(
     compilation_env: &mut CompilationEnv,
     files: &mut FilesSourceText,
     fname: Symbol,

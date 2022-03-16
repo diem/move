@@ -309,3 +309,53 @@ function {:inline} $CondExtendEventStore{{S}}(
         es
 }
 {% endmacro event_module %}
+
+
+{# Reflect
+    ====
+#}
+{% macro reflect_module(instance) %}
+
+{%- set S = "'" ~ instance.suffix ~ "'" -%}
+
+// fun Reflect::mod_address_of [baseline] at ./../move-stdlib/sources/Reflect.move:8:5+51
+procedure {:inline 1} $1_Reflect_mod_address_of{{S}}() returns ($ret0: int)
+{
+    // declare local variables
+    var $t0: int;
+    var $temp_0'address': int;
+
+    // bytecode translation starts here
+    // $t0 := 0x1 at ./../move-stdlib/sources/Reflect.move:8:50+4
+    assume {:print "$at(28,202,206)"} true;
+    $t0 := 1;
+    assume $IsValid'address'($t0);
+
+    // trace_return[0]($t0) at ./../move-stdlib/sources/Reflect.move:8:50+4
+    assume {:print "$track_return(6,0,0):", $t0} $t0 == $t0;
+
+    // label L1 at ./../move-stdlib/sources/Reflect.move:8:55+1
+L1:
+
+    // return $t0 at ./../move-stdlib/sources/Reflect.move:8:55+1
+    $ret0 := $t0;
+    return;
+}
+
+// spec fun at ./../move-stdlib/sources/Reflect.move:8:5+51
+function {:inline} $1_Reflect_$mod_address_of{{S}}(): int {
+    1
+}
+
+{% endmacro reflect_module %}
+
+{% macro create_signer() %}
+
+procedure {:inline 1} $1_PontAccount_create_signer(
+  addr: int
+) returns (signer: $signer) {
+    // A signer is currently identical to an address.
+    signer := $signer(addr);
+}
+
+{% endmacro create_signer %}

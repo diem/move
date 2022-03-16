@@ -43,15 +43,15 @@ pub struct Move {
         parse(from_os_str),
         default_value = "."
     )]
-    package_path: PathBuf,
+    pub package_path: PathBuf,
 
     /// Print additional diagnostics if available.
     #[structopt(short = "v", global = true)]
-    verbose: bool,
+    pub verbose: bool,
 
     /// Package build options
     #[structopt(flatten)]
-    build_config: BuildConfig,
+    pub build_config: BuildConfig,
 }
 
 /// MoveCLI is the CLI that will be executed by the `move-cli` command
@@ -70,13 +70,13 @@ pub struct MoveCLI {
 pub enum Command {
     /// Execute a package command. Executed in the current directory or the closest containing Move
     /// package.
-    #[structopt(name = "package")]
+    #[structopt(name = "package", display_order = 1)]
     Package {
         #[structopt(subcommand)]
         cmd: package::cli::PackageCommand,
     },
     /// Execute a sandbox command.
-    #[structopt(name = "sandbox")]
+    #[structopt(name = "sandbox", display_order = 2)]
     Sandbox {
         /// Directory storing Move resources, events, and module bytecodes produced by module publishing
         /// and script execution.
@@ -86,7 +86,7 @@ pub enum Command {
         cmd: sandbox::cli::SandboxCommand,
     },
     /// (Experimental) Run static analyses on Move source or bytecode.
-    #[structopt(name = "experimental")]
+    #[structopt(name = "experimental", display_order = 3)]
     Experimental {
         /// Directory storing Move resources, events, and module bytecodes produced by module publishing
         /// and script execution.

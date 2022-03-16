@@ -24,10 +24,9 @@ pub enum RawAddress {
 }
 
 fn parse_address_literal(s: &str) -> Result<AccountAddress> {
-    let (number, _number_format) = move_compiler::shared::parse_u128(s)
+    let addr = NumericalAddress::parse_str(s)
         .map_err(|e| anyhow!("Failed to parse address. Got error: {}", e))?;
-
-    Ok(AccountAddress::new(number.to_be_bytes()))
+    Ok(addr.into_inner())
 }
 
 impl RawAddress {

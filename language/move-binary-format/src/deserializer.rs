@@ -213,7 +213,7 @@ fn load_signature_size(cursor: &mut VersionedCursor) -> BinaryLoaderResult<u64> 
     read_uleb_internal(cursor, SIGNATURE_SIZE_MAX)
 }
 
-fn load_constant_size(cursor: &mut VersionedCursor) -> BinaryLoaderResult<usize> {
+pub fn load_constant_size(cursor: &mut VersionedCursor) -> BinaryLoaderResult<usize> {
     read_uleb_internal(cursor, CONSTANT_SIZE_MAX)
 }
 
@@ -826,7 +826,7 @@ pub fn load_signature_token_test_entry(
 }
 
 /// Deserializes a `SignatureToken`.
-fn load_signature_token(cursor: &mut VersionedCursor) -> BinaryLoaderResult<SignatureToken> {
+pub fn load_signature_token(cursor: &mut VersionedCursor) -> BinaryLoaderResult<SignatureToken> {
     // The following algorithm works by storing partially constructed types on a stack.
     //
     // Example:

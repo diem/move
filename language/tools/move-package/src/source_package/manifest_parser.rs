@@ -212,7 +212,7 @@ pub fn parse_addresses(tval: TV) -> Result<PM::AddressDeclarations> {
                         } else if addresses
                             .insert(
                                 ident,
-                                Some(parse_address_literal(entry_str).context("Invalid address")?),
+                                Some(pontem::parse_address(entry_str).context("Invalid address")?),
                             )
                             .is_some()
                         {
@@ -250,7 +250,7 @@ pub fn parse_dev_addresses(tval: TV) -> Result<PM::DevAddressDeclarations> {
                         } else if addresses
                             .insert(
                                 ident,
-                                parse_address_literal(entry_str).context("Invalid address")?,
+                                pontem::parse_address(entry_str).context("Invalid address")?,
                             )
                             .is_some()
                         {
@@ -388,7 +388,7 @@ fn parse_substitution(tval: TV) -> Result<PM::Substitution> {
                 let addr_ident = PM::NamedAddress::from(addr_name.as_str());
                 match tval {
                     TV::String(addr_or_name) => {
-                        if let Ok(addr) = AccountAddress::from_hex_literal(&addr_or_name) {
+                        if let Ok(addr) = pontem::parse_address(&addr_or_name) {
                             subst.insert(addr_ident, PM::SubstOrRename::Assign(addr));
                         } else {
                             let rename_from = PM::NamedAddress::from(addr_or_name.as_str());

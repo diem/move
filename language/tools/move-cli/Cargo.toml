@@ -49,6 +49,8 @@ move-bytecode-source-map = { path = "../../move-ir-compiler/move-bytecode-source
 move-bytecode-viewer = { path = "../move-bytecode-viewer" }
 workspace-hack = { version = "0.1", path = "../../../crates/workspace-hack" }
 
+pontem = { path = "../../../pontem" }
+
 [dev-dependencies]
 datatest-stable = "0.1.1"
 

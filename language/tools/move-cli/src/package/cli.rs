@@ -76,10 +76,14 @@ pub enum CoverageSummaryOptions {
 pub enum PackageCommand {
     /// Create a new Move package with name `name` at `path`. If `path` is not provided the package
     /// will be created in the directory `name`.
+    /// Use `--cwd` to ignore this behaviour and create package in the current directory.
     #[structopt(name = "new")]
     New {
         /// The name of the package to be created.
         name: String,
+        /// Ignores `path` parameter and creates a package in the current working directory.
+        #[structopt(long = "cwd")]
+        use_cwd: bool,
     },
     /// Build the package at `path`. If no path is provided defaults to current directory.
     #[structopt(name = "build")]
@@ -271,8 +275,12 @@ pub fn handle_package_commands(
 ) -> Result<()> {
     // This is the exceptional command as it doesn't need a package to run, so we can't count on
     // being able to root ourselves.
-    if let PackageCommand::New { name } = cmd {
-        let creation_path = Path::new(&path).join(name);
+    if let PackageCommand::New { name, use_cwd } = cmd {
+        let creation_path = if *use_cwd {
+            Path::new(&path).to_path_buf()
+        } else {
+            Path::new(&path).join(name)
+        };
         create_move_package(name, &creation_path)?;
         return Ok(());
     }

@@ -1,0 +1,21 @@
+[package]
+name = "pontem"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.38"
+
+# bech32 support
+bech32 = "0.7.2"
+
+# ss58 prefix
+blake2-rfc = "0.2.18"
+rust-base58 = "0.0.4"
+
+move-core-types = { path = "../language/move-core/types" }
+move-binary-format = { path = "../language/move-binary-format" }
+
+[features]
+default = []
+bech32_addr = []
