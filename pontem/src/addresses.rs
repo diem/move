@@ -1,6 +1,6 @@
 use anyhow::{anyhow, ensure, Result};
 use move_core_types::account_address::AccountAddress;
-use rust_base58::FromBase58;
+use rust_base58::{FromBase58, ToBase58};
 
 const SS58_PREFIX: &[u8] = b"SS58PRE";
 const PUB_KEY_LENGTH: usize = 32;
@@ -57,6 +57,17 @@ pub fn ss58_to_address(ss58: &str) -> Result<AccountAddress> {
 
 pub fn ss58_to_diem(ss58: &str) -> Result<String> {
     Ok(format!("{:#X}", ss58_to_address(ss58)?))
+}
+
+/// Convert address to ss58
+/// 0xD43593C715FDD31C61141ABD04A99FD6822C8558854CCDE39A5684E7A56DA27D => 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+pub fn address_to_ss58(addr: &AccountAddress) -> String {
+    let mut ss58_address = [0; 35];
+    ss58_address[0] = 42;
+    ss58_address[1..33].copy_from_slice(&addr.to_vec());
+    let hash = ss58hash(&ss58_address[0..33]);
+    ss58_address[33..35].copy_from_slice(&hash.as_bytes()[0..2]);
+    ss58_address.to_base58()
 }
 
 #[cfg(test)]

@@ -1,8 +1,10 @@
 mod addresses;
 
-use crate::addresses::{bech32_into_address, ss58_to_address, HRP};
+use crate::addresses::{bech32_into_address, HRP};
 use anyhow::{Context, Result};
 use move_core_types::account_address::AccountAddress;
+
+pub use crate::addresses::{ss58_to_address, address_to_ss58};
 
 pub fn parse_address(addr: &str) -> Result<AccountAddress> {
     if let Ok(address) = ss58_to_address(addr) {
