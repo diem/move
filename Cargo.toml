@@ -65,6 +65,7 @@ members = [
     "language/tools/read-write-set/dynamic",
     "language/tools/read-write-set/types",
     "pontem",
+    "pontem/bytecode_adapter",
 ]
 
 # NOTE: default-members is the complete list of binaries that form the "production Diem codebase". These members should

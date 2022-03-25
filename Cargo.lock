@@ -333,6 +333,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bytecode_adapter"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "move-binary-format",
+ "move-core-types",
+ "workspace-hack",
+]
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,18 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package]
+name = "bytecode_adapter"
+version = "0.1.0"
+authors = [
+    "Alex Koz. <alexanderkozlovskii@wings.ai>",
+    "Dm. Yakushev <dmitryyakushev@wings.ai>",
+    "Maxim Kurnikov <maximkurnikov@wings.ai>"
+]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.38"
+
+workspace-hack = { path = "../../crates/workspace-hack" }
+move-binary-format = { path = "../../language/move-binary-format" }
+move-core-types = { path = "../../language/move-core/types" }
