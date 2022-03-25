@@ -79,12 +79,8 @@ pub enum CoverageSummaryOptions {
 pub enum PackageCommand {
     /// Create a new Move package with name `name` at `path`. If `path` is not provided the package
     /// will be created in the directory `name`.
-<<<<<<< HEAD
     /// Use `--cwd` to ignore this behaviour and create package in the current directory.
-    #[structopt(name = "new")]
-=======
     #[clap(name = "new")]
->>>>>>> main
     New {
         /// The name of the package to be created.
         name: String,
