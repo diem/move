@@ -74,6 +74,10 @@ static PLACEHOLDERS: Lazy<BTreeMap<&'static str, &'static str>> = Lazy::new(|| {
         "ADMIN_STORAGE_GROUP" => "1",
         "WORD_AND_STORAGE_GROUP_LENGTH" => "36",
 
+        // Number of storage groups already allocated. Right now there are two: linear storage
+        // group and admin storage group.
+        "NUM_STATIC_STORAGE_GROUP" => "2",
+
         // Counters in the ADMIN_STORAGE_GROUP for persistent storage of group and linked storage
         // counters.
         "STORAGE_GROUP_COUNTER_LOC" => "0",
@@ -183,6 +187,11 @@ AbortBuiltin: "() {
 NotImplemented: "() {
     $AbortBuiltin()
 }" dep AbortBuiltin,
+RevertForward: "() {
+  let pos := mload(${MEM_SIZE_LOC})
+  returndatacopy(pos, 0, returndatasize())
+  revert(pos, returndatasize())
+}",
 
 // -------------------------------------------------------------------------------------------
 // Memory
@@ -201,6 +210,13 @@ Malloc: "(size) -> offs {
     // pad to word size
     mstore(${MEM_SIZE_LOC}, add(offs, shl(5, shr(5, add(size, 31)))))
 }",
+
+MallocAt: "(offs, size) {
+  let new_free_ptr := add(offs, $RoundUp(size))
+  // protect against overflow
+  if or(gt(new_free_ptr, 0xffffffffffffffff), lt(new_free_ptr, offs)) { $AbortBuiltin() }
+  mstore(${MEM_SIZE_LOC}, new_free_ptr)
+}" dep RoundUp dep AbortBuiltin,
 
 // Frees memory of size
 Free: "(offs, size) {
@@ -325,7 +341,7 @@ StorageStoreBytes: "(offs, size, bytes) {
 // value and type into a unique storage key.
 StorageKey: "(group, word) -> key {
   mstore(${SCRATCH1_LOC}, word)
-  mstore(${SCRATCH2_LOC}, group)
+  mstore(${SCRATCH2_LOC}, shl(224, group))
   key := keccak256(${SCRATCH1_LOC}, ${WORD_AND_STORAGE_GROUP_LENGTH})
 }",
 
@@ -362,6 +378,17 @@ IndexPtr: "(ptr, offs) -> new_ptr {
   new_ptr := $MakePtr($IsStoragePtr(ptr), add($OffsetPtr(ptr), offs))
 }" dep MakePtr dep IsStoragePtr dep OffsetPtr,
 
+NewTableHandle: "() -> handle {
+  let key := $StorageKey(${ADMIN_STORAGE_GROUP}, ${STORAGE_GROUP_COUNTER_LOC})
+  handle := sload(key)
+  if iszero(handle) {
+     // no tables have been allocated in this contract, need to initialize the counter
+     // to the number of storage groups already statically allocated
+     handle := ${NUM_STATIC_STORAGE_GROUP}
+  }
+  sstore(key, add(handle, 1))
+}
+" dep StorageKey,
 // ------------
 
 // Loads u8 from pointer.
@@ -576,6 +603,42 @@ CopyMemory: "(src, dst, size) {
   }
 }",
 
+CopyMemoryU8: "(src, dst, size) {
+  let i := 0
+  for { } lt(i, size) { i := add(i, 32) } {
+    mstore(add(dst, i), mload(add(src, i)))
+  }
+  if gt(i, size)
+  {
+      for {let j := i} lt(j, size) {j := add(j, 1)} {
+        mstore8(add(dst, j), 0)
+      }
+  }
+}",
+
+CheckMemorySize: "(len) -> checked_len {
+    if gt(len, 0xffffffffffffffff) { $AbortBuiltin() }
+    checked_len := len
+}" dep AbortBuiltin,
+
+CopyFromCallDataToMemory: "(src, dst, length) {
+    calldatacopy(dst, src, length)
+    mstore(add(dst, length), 0)
+}",
+
+CopyFromMemoryToMemory: "(src, dst, length) {
+  let i := 0
+  for { } lt(i, length) { i := add(i, 32) }
+  {
+    mstore(add(dst, i), mload(add(src, i)))
+  }
+  if gt(i, length)
+  {
+    // clear end
+    mstore(add(dst, length), 0)
+  }
+}",
+
 ResizeVector: "(v_offs, capacity, type_size) -> new_v_offs {
     let new_capacity := mul(capacity, 2)
     let data_size := add(${VECTOR_METADATA_SIZE}, mul(capacity, type_size))
@@ -635,6 +698,9 @@ Mod: "(x, y) -> r {
 }" dep AbortBuiltin,
 Shr: "(x, y) -> r {
     r := shr(y, x)
+}",
+Shl: "(x, y) -> r {
+  r := shl(y, x)
 }",
 ShlU8: "(x, y) -> r {
     r := and(shl(y, x), ${MAX_U8})
@@ -712,5 +778,8 @@ ClosestGreaterPowerOfTwo: "(x) -> r {
     r := or(r, shr(16, r))
     r := or(r, shr(32, r))
     r := add(x, 1)
+}",
+RoundUp: "(value) -> result {
+    result := and(add(value, 31), not(31))
 }"
 }

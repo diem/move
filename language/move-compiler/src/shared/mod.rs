@@ -4,7 +4,9 @@
 use crate::{
     command_line as cli,
     diagnostics::{codes::Severity, Diagnostic, Diagnostics},
+    naming::ast::ModuleDefinition,
 };
+use clap::*;
 use move_core_types::account_address::AccountAddress;
 use move_ir_types::location::*;
 use move_symbol_pool::Symbol;
@@ -17,7 +19,6 @@ use std::{
     num::ParseIntError,
     sync::atomic::{AtomicUsize, Ordering as AtomicOrdering},
 };
-use structopt::*;
 
 pub mod ast_debug;
 pub mod remembering_unique_map;
@@ -323,6 +324,8 @@ pub type AddressScopedFiles = (Vec<String>, BTreeMap<String, NumericalAddress>);
 pub type NamedAddressMap = BTreeMap<Symbol, NumericalAddress>;
 pub(crate) type AddressScopedFileIndexed = (String, NamedAddressMapIndex);
 
+pub type AttributeDeriver = dyn Fn(&mut CompilationEnv, &mut ModuleDefinition);
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct NamedAddressMapIndex(usize);
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -436,18 +439,24 @@ pub fn format_comma<T: fmt::Display, I: IntoIterator<Item = T>>(items: I) -> Str
 // Flags
 //**************************************************************************************************
 
-#[derive(Clone, Debug, Eq, PartialEq, StructOpt)]
+#[derive(Clone, Debug, Eq, PartialEq, Parser)]
 pub struct Flags {
     /// Compile in test mode
-    #[structopt(
+    #[clap(
         short = cli::TEST_SHORT,
         long = cli::TEST,
     )]
     test: bool,
 
+    /// Compilation flavor.
+    #[clap(
+        long = cli::FLAVOR,
+    )]
+    flavor: String,
+
     /// If set, do not allow modules defined in source_files to shadow modules of the same id that
     /// exist in dependencies. Checking will fail in this case.
-    #[structopt(
+    #[clap(
         name = "SOURCES_DO_NOT_SHADOW_DEPS",
         short = cli::NO_SHADOW_SHORT,
         long = cli::NO_SHADOW,
@@ -460,6 +469,7 @@ impl Flags {
         Self {
             test: false,
             no_shadow: false,
+            flavor: "".to_string(),
         }
     }
 
@@ -467,6 +477,14 @@ impl Flags {
         Self {
             test: true,
             no_shadow: false,
+            flavor: "".to_string(),
+        }
+    }
+
+    pub fn set_flavor(self, flavor: impl ToString) -> Self {
+        Self {
+            flavor: flavor.to_string(),
+            ..self
         }
     }
 
@@ -487,6 +505,10 @@ impl Flags {
 
     pub fn sources_shadow_deps(&self) -> bool {
         !self.no_shadow
+    }
+
+    pub fn get_flavor(&self) -> &str {
+        &self.flavor
     }
 }
 
