@@ -12,6 +12,7 @@ mod mutator;
 
 pub const PONTEM_LENGTH: usize = 32;
 
+#[derive(Clone, Copy)]
 pub enum AddressType {
     Bech32 = 20,
     Aptos = 16,

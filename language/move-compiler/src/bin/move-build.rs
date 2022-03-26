@@ -77,7 +77,7 @@ pub fn main() -> anyhow::Result<()> {
         vec![(dependencies, named_addr_map)],
     )
     .set_interface_files_dir(interface_files_dir)
-    .set_flags(flags)
+    .set_flags(flags.clone())
     .build_and_report()?;
-    move_compiler::output_compiled_units(emit_source_map, files, compiled_units, &out_dir)
+    move_compiler::output_compiled_units(emit_source_map, files, compiled_units, &out_dir, flags)
 }

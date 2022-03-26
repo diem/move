@@ -2179,6 +2179,7 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "bcs",
+ "bytecode_adapter",
  "clap 3.1.6",
  "codespan-reporting",
  "datatest-stable",

@@ -28,6 +28,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use tempfile::NamedTempFile;
+use bytecode_adapter::{adapt_from_pontem, AddressType};
 
 //**************************************************************************************************
 // Definitions
@@ -508,6 +509,7 @@ pub fn output_compiled_units(
     files: FilesSourceText,
     compiled_units: Vec<AnnotatedCompiledUnit>,
     out_dir: &str,
+    flags: Flags,
 ) -> anyhow::Result<()> {
     const SCRIPT_SUB_DIR: &str = "scripts";
     const MODULE_SUB_DIR: &str = "modules";
@@ -524,9 +526,12 @@ pub fn output_compiled_units(
                 $path.set_extension(SOURCE_MAP_EXTENSION);
                 fs::write($path.as_path(), &$unit.serialize_source_map())?;
             }
-
+            let mut serialized = $unit.serialize();
+            if flags.get_flavor() == "aptos" {
+                adapt_from_pontem(&mut serialized, AddressType::Aptos)?;
+            }
             $path.set_extension(MOVE_COMPILED_EXTENSION);
-            fs::write($path.as_path(), &$unit.serialize())?
+            fs::write($path.as_path(), &serialized)?;
         }};
     }
 

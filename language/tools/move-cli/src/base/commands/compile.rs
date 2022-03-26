@@ -24,11 +24,12 @@ pub fn compile(
     if verbose {
         println!("Compiling Move files...");
     }
+    let flags = Flags::empty().set_sources_shadow_deps(sources_shadow_deps);
     let (files, compiled_units) = Compiler::new(
         vec![(sources, named_address_mapping.clone())],
         vec![(interface_files, named_address_mapping)],
     )
-    .set_flags(Flags::empty().set_sources_shadow_deps(sources_shadow_deps))
+    .set_flags(flags.clone())
     .build_and_report()?;
-    move_compiler::output_compiled_units(emit_source_map, files, compiled_units, output_dir)
+    move_compiler::output_compiled_units(emit_source_map, files, compiled_units, output_dir, flags)
 }

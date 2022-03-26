@@ -32,6 +32,7 @@ move-command-line-common = { path = "../move-command-line-common" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 pontem = { path = "../../pontem" }
+bytecode_adapter = { path = "../../pontem/bytecode_adapter" }
 
 [dev-dependencies]
 move-stdlib = { path = "../move-stdlib" }
