@@ -45,6 +45,6 @@ describe("Token (the Move contract)", function () {
     it("test name", async function () {
         const accounts = await ethers.getSigners();
         deployer = accounts[0];
-        expect(await this.token.name()).to.be.equal("user");
+        expect(await this.token.name()).to.be.equal("uxser");
     });
 });
