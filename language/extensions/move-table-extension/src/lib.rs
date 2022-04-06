@@ -80,6 +80,49 @@ pub trait TableResolver {
     ) -> InternalGasUnits<GasCarrier>;
 }
 
+struct UnsafeStaticTableResolver {
+    inner: *const dyn TableResolver,
+}
+
+impl UnsafeStaticTableResolver {
+    fn unsafe_new(resolver: &dyn TableResolver) -> Self {
+        unsafe {
+            Self {
+                inner: std::mem::transmute::<&dyn TableResolver, *const dyn TableResolver>(
+                    resolver,
+                ),
+            }
+        }
+    }
+
+    fn unsafe_get(&self) -> &dyn TableResolver {
+        unsafe { &*self.inner as &dyn TableResolver }
+    }
+}
+
+impl TableResolver for UnsafeStaticTableResolver {
+    fn resolve_table_entry(
+        &self,
+        handle: &TableHandle,
+        key: &[u8],
+    ) -> Result<Option<Vec<u8>>, anyhow::Error> {
+        self.unsafe_get().resolve_table_entry(handle, key)
+    }
+
+    fn table_size(&self, handle: &TableHandle) -> Result<usize, anyhow::Error> {
+        self.unsafe_get().table_size(handle)
+    }
+
+    fn operation_cost(
+        &self,
+        op: TableOperation,
+        key_size: usize,
+        val_size: usize,
+    ) -> InternalGasUnits<GasCarrier> {
+        self.unsafe_get().operation_cost(op, key_size, val_size)
+    }
+}
+
 /// A table operation, for supporting cost calculation.
 pub enum TableOperation {
     NewHandle,
@@ -94,8 +137,8 @@ pub enum TableOperation {
 /// The native table context extension. This needs to be attached to the NativeContextExtensions
 /// value which is passed into session functions, so its accessible from natives of this
 /// extension.
-pub struct NativeTableContext<'a> {
-    resolver: &'a dyn TableResolver,
+pub struct NativeTableContext {
+    resolver: UnsafeStaticTableResolver,
     txn_hash: u128,
     table_data: RefCell<TableData>,
 }
@@ -131,12 +174,12 @@ const HANDLE_FIELD_INDEX: usize = 0;
 // =========================================================================================
 // Implementation of Native Table Context
 
-impl<'a> NativeTableContext<'a> {
+impl NativeTableContext {
     /// Create a new instance of a native table context. This must be passed in via an
     /// extension into VM session functions.
-    pub fn new(txn_hash: u128, resolver: &'a dyn TableResolver) -> Self {
+    pub fn new(txn_hash: u128, resolver: &dyn TableResolver) -> Self {
         Self {
-            resolver,
+            resolver: UnsafeStaticTableResolver::unsafe_new(resolver),
             txn_hash,
             table_data: Default::default(),
         }
