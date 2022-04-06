@@ -1181,14 +1181,18 @@ impl Frame {
                         let elements = interpreter.operand_stack.popn(*num as u16)?;
                         let size = AbstractMemorySize::new(*num);
                         gas_status.charge_instr_with_size(Opcodes::VEC_PACK, size)?;
-                        let value = Vector::pack(resolver.single_type_at(*si), elements)?;
+                        let value = Vector::pack(
+                            &resolver.instantiate_single_type(*si, self.ty_args())?,
+                            elements,
+                        )?;
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecLen(si) => {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_LEN)?;
                         // see REFERENCE SAFETY EXPLANATION in values
-                        let value = unsafe { vec_ref.len(resolver.single_type_at(*si))? };
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.len(vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecImmBorrow(si) => {
@@ -1196,8 +1200,8 @@ impl Frame {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_IMM_BORROW)?;
                         // see REFERENCE SAFETY EXPLANATION in values
-                        let value =
-                            unsafe { vec_ref.borrow_elem(idx, resolver.single_type_at(*si))? };
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.borrow_elem(idx, vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecMutBorrow(si) => {
@@ -1205,8 +1209,8 @@ impl Frame {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_MUT_BORROW)?;
                         // see REFERENCE SAFETY EXPLANATION in values
-                        let value =
-                            unsafe { vec_ref.borrow_elem(idx, resolver.single_type_at(*si))? };
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.borrow_elem(idx, vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecPushBack(si) => {
@@ -1214,20 +1218,23 @@ impl Frame {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr_with_size(Opcodes::VEC_PUSH_BACK, elem.size())?;
                         // see REFERENCE SAFETY EXPLANATION in values
-                        unsafe { vec_ref.push_back(elem, resolver.single_type_at(*si))? };
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        unsafe { vec_ref.push_back(elem, vec_ty_arg)? };
                     }
                     Bytecode::VecPopBack(si) => {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_POP_BACK)?;
                         // see REFERENCE SAFETY EXPLANATION in values
-                        let value = unsafe { vec_ref.pop(resolver.single_type_at(*si))? };
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.pop(vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecUnpack(si, num) => {
                         let vec_val = interpreter.operand_stack.pop_as::<Vector>()?;
                         let size = AbstractMemorySize::new(*num);
                         gas_status.charge_instr_with_size(Opcodes::VEC_UNPACK, size)?;
-                        let elements = vec_val.unpack(resolver.single_type_at(*si), *num)?;
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let elements = vec_val.unpack(vec_ty_arg, *num)?;
                         for value in elements {
                             interpreter.operand_stack.push(value)?;
                         }
@@ -1238,7 +1245,8 @@ impl Frame {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_SWAP)?;
                         // see REFERENCE SAFETY EXPLANATION in values
-                        unsafe { vec_ref.swap(idx1, idx2, resolver.single_type_at(*si))? };
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        unsafe { vec_ref.swap(idx1, idx2, vec_ty_arg)? };
                     }
                 }
                 // invariant: advance to pc +1 is iff instruction at pc executed without aborting
