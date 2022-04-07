@@ -59,6 +59,8 @@ pub struct TableChangeSet {
 /// A change of a single table.
 pub struct TableChange {
     pub entries: BTreeMap<Vec<u8>, Option<Vec<u8>>>,
+    pub base_size: u64,
+    pub size_delta: i64,
 }
 
 /// A table resolver which needs to be provided by the environment. This allows to lookup
@@ -165,8 +167,8 @@ struct Table {
     key_layout: MoveTypeLayout,
     value_layout: MoveTypeLayout,
     content: BTreeMap<Vec<u8>, GlobalValue>,
+    base_size: u64,
     size_delta: i64, // The sum of added and removed entries
-    new_table: bool,
 }
 
 /// The field index of the `handle` field in the `Table` Move struct.
@@ -199,6 +201,8 @@ impl NativeTableContext {
             let Table {
                 value_layout,
                 content,
+                base_size,
+                size_delta,
                 ..
             } = table;
             let mut entries = BTreeMap::new();
@@ -215,7 +219,14 @@ impl NativeTableContext {
                 }
             }
             if !entries.is_empty() {
-                changes.insert(handle, TableChange { entries });
+                changes.insert(
+                    handle,
+                    TableChange {
+                        entries,
+                        base_size,
+                        size_delta,
+                    },
+                );
             }
         }
         Ok(TableChangeSet {
@@ -260,15 +271,28 @@ impl TableData {
         if let Entry::Vacant(e) = self.tables.entry(handle) {
             let key_layout = get_type_layout(context, key_ty)?;
             let value_layout = get_type_layout(context, value_ty)?;
+            let base_size = if new_table {
+                0
+            } else {
+                let table_context = context.extensions().get::<NativeTableContext>();
+                table_context.resolver.table_size(&handle).map_err(|e| {
+                    partial_extension_error(format!("table_size() failed with {}", e))
+                })? as u64
+            };
             let table = Table {
                 handle,
                 key_layout,
                 value_layout,
+                base_size,
                 size_delta: 0,
                 content: Default::default(),
-                new_table,
             };
             e.insert(table);
+        } else if new_table {
+            return Err(partial_abort_error(
+                "Table already exists.",
+                *ALREADY_EXISTS,
+            ));
         }
         Ok(self.tables.get_mut(&handle).unwrap())
     }
@@ -337,15 +361,8 @@ impl Table {
     }
 
     /// Compute the size of a table.
-    fn length(&mut self, context: &NativeTableContext) -> PartialVMResult<(u64, usize, usize)> {
-        let remote_size = if self.new_table {
-            0
-        } else {
-            context.resolver.table_size(&self.handle).map_err(|err| {
-                partial_extension_error(format!("remote table size failed: {}", err))
-            })?
-        };
-        let effective_size = (remote_size as i128) + (self.size_delta as i128);
+    fn length(&mut self, _context: &NativeTableContext) -> PartialVMResult<(u64, usize, usize)> {
+        let effective_size = (self.base_size as i128) + (self.size_delta as i128);
         if effective_size < 0 {
             Err(partial_extension_error("inconsistent table size"))
         } else {

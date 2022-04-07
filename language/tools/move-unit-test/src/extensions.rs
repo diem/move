@@ -11,7 +11,7 @@ use std::fmt::Write;
 #[cfg(feature = "table-extension")]
 use itertools::Itertools;
 #[cfg(feature = "table-extension")]
-use move_table_extension::NativeTableContext;
+use move_table_extension::{NativeTableContext, TableResolver};
 
 /// Print the change sets for available native context extensions.
 #[allow(unused)]

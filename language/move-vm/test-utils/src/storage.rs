@@ -269,6 +269,10 @@ impl InMemoryStorage {
                     table.remove(&key);
                 }
             }
+            assert_eq!(
+                table.len(),
+                (c.base_size as i128 + c.size_delta as i128) as usize
+            );
         }
     }
 
