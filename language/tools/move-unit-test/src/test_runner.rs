@@ -250,6 +250,17 @@ impl<'a, 'b, W: Write> TestOutput<'a, 'b, W> {
 }
 
 impl SharedTestingConfig {
+    fn create_extensions(&self) -> NativeContextExtensions {
+        #[allow(unused_mut)]
+        let mut extensions = NativeContextExtensions::default();
+        #[cfg(feature = "table-extension")]
+        {
+            use crate::extensions::create_table_extension;
+            create_table_extension(&mut extensions, &self.starting_storage_state);
+        }
+        extensions
+    }
+
     fn execute_via_move_vm(
         &self,
         test_plan: &ModuleTestPlan,
@@ -262,7 +273,7 @@ impl SharedTestingConfig {
         TestRunInfo,
     ) {
         let move_vm = MoveVM::new(self.native_function_table.clone()).unwrap();
-        let extensions = extensions::new_extensions();
+        let extensions = self.create_extensions();
         let mut session =
             move_vm.new_session_with_extensions(&self.starting_storage_state, extensions);
         let mut gas_meter = GasStatus::new(&self.cost_table, GasUnits::new(self.execution_bound));

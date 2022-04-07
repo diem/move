@@ -12,19 +12,6 @@ use std::fmt::Write;
 use itertools::Itertools;
 #[cfg(feature = "table-extension")]
 use move_table_extension::NativeTableContext;
-#[cfg(feature = "table-extension")]
-use move_vm_test_utils::BlankStorage;
-#[cfg(feature = "table-extension")]
-use once_cell::sync::Lazy;
-
-/// Create all available native context extensions.
-#[allow(unused_mut, clippy::let_and_return)]
-pub(crate) fn new_extensions() -> NativeContextExtensions {
-    let mut e = NativeContextExtensions::default();
-    #[cfg(feature = "table-extension")]
-    create_table_extension(&mut e);
-    e
-}
 
 /// Print the change sets for available native context extensions.
 #[allow(unused)]
@@ -37,8 +24,11 @@ pub(crate) fn print_change_sets<W: Write>(_w: &mut W, mut extensions: NativeCont
 // Table Extensions
 
 #[cfg(feature = "table-extension")]
-fn create_table_extension(extensions: &mut NativeContextExtensions) {
-    extensions.add(NativeTableContext::new(0, &*DUMMY_RESOLVER));
+pub(crate) fn create_table_extension(
+    extensions: &mut NativeContextExtensions,
+    resolver: &dyn TableResolver,
+) {
+    extensions.add(NativeTableContext::new(0, resolver));
 }
 
 #[cfg(feature = "table-extension")]
@@ -69,6 +59,3 @@ fn print_table_extension<W: Write>(w: &mut W, extensions: &mut NativeContextExte
         }
     }
 }
-
-#[cfg(feature = "table-extension")]
-static DUMMY_RESOLVER: Lazy<BlankStorage> = Lazy::new(|| BlankStorage);
