@@ -7,7 +7,7 @@ module Extensions::Table {
 
     /// Create a new Table.
     public fun new<K, V: store>(): Table<K, V> {
-        Table{handle: new_table_handle()}
+        Table{handle: new_table_handle<K, V, Box<V>>()}
     }
 
     /// Destroy a table. The table must be empty to succeed.
@@ -82,7 +82,7 @@ module Extensions::Table {
 
     // Primitives which take as an additional type parameter `Box<V>`, so the implementation
     // can use this to determine serialization layout.
-    native fun new_table_handle(): u128;
+    native fun new_table_handle<K, V, B>(): u128;
     native fun add_box<K, V, B>(table: &mut Table<K, V>, key: &K, val: Box<V>);
     native fun borrow_box<K, V, B>(table: &Table<K, V>, key: &K): &Box<V>;
     native fun borrow_box_mut<K, V, B>(table: &mut Table<K, V>, key: &K): &mut Box<V>;

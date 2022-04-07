@@ -166,6 +166,7 @@ struct Table {
     value_layout: MoveTypeLayout,
     content: BTreeMap<Vec<u8>, GlobalValue>,
     size_delta: i64, // The sum of added and removed entries
+    new_table: bool,
 }
 
 /// The field index of the `handle` field in the `Table` Move struct.
@@ -228,12 +229,33 @@ impl NativeTableContext {
 impl TableData {
     /// Gets or creates a new table in the TableData. This initializes information about
     /// the table, like the type layout for keys and values.
-    fn get_or_create_table(
+    fn get_table(
         &mut self,
         context: &NativeContext,
         handle: TableHandle,
         key_ty: &Type,
         value_ty: &Type,
+    ) -> PartialVMResult<&mut Table> {
+        self.get_or_create_table_impl(context, handle, key_ty, value_ty, false)
+    }
+
+    fn new_table(
+        &mut self,
+        context: &NativeContext,
+        handle: TableHandle,
+        key_ty: &Type,
+        value_ty: &Type,
+    ) -> PartialVMResult<&mut Table> {
+        self.get_or_create_table_impl(context, handle, key_ty, value_ty, true)
+    }
+
+    fn get_or_create_table_impl(
+        &mut self,
+        context: &NativeContext,
+        handle: TableHandle,
+        key_ty: &Type,
+        value_ty: &Type,
+        new_table: bool,
     ) -> PartialVMResult<&mut Table> {
         if let Entry::Vacant(e) = self.tables.entry(handle) {
             let key_layout = get_type_layout(context, key_ty)?;
@@ -244,6 +266,7 @@ impl TableData {
                 value_layout,
                 size_delta: 0,
                 content: Default::default(),
+                new_table,
             };
             e.insert(table);
         }
@@ -259,7 +282,7 @@ impl Table {
         key: &Value,
         val: Value,
     ) -> PartialVMResult<(usize, usize)> {
-        let (gv_opt, _, _) = self.global_value(context, key)?;
+        let (gv_opt, _, _) = self.global_value_if_exists(context, key)?;
         if gv_opt.is_some() {
             return Err(partial_abort_error(
                 "table entry already occupied",
@@ -284,7 +307,7 @@ impl Table {
         context: &NativeTableContext,
         key: &Value,
     ) -> PartialVMResult<(Value, usize, usize)> {
-        let (gv_opt, key_size, val_size) = self.global_value(context, key)?;
+        let (gv_opt, key_size, val_size) = self.global_value_if_exists(context, key)?;
         let gv = gv_opt.ok_or_else(|| partial_abort_error("undefined table entry", *NOT_FOUND))?;
         let val = gv.borrow_global()?;
         Ok((val, key_size, val_size))
@@ -296,7 +319,7 @@ impl Table {
         context: &NativeTableContext,
         key: &Value,
     ) -> PartialVMResult<(Value, usize, usize)> {
-        let (gv_opt, key_size, val_size) = self.global_value(context, key)?;
+        let (gv_opt, key_size, val_size) = self.global_value_if_exists(context, key)?;
         let gv = gv_opt.ok_or_else(|| partial_abort_error("undefined table entry", *NOT_FOUND))?;
         let val = gv.move_from()?;
         self.size_delta -= 1;
@@ -309,17 +332,19 @@ impl Table {
         context: &NativeTableContext,
         key: &Value,
     ) -> PartialVMResult<(Value, usize, usize)> {
-        let (gv_opt, key_size, val_size) = self.global_value(context, key)?;
-        let val = Value::bool(gv_opt.and_then(|v| v.exists().ok()).unwrap_or(false));
-        Ok((val, key_size, val_size))
+        let (gv_opt, key_size, val_size) = self.global_value_if_exists(context, key)?;
+        Ok((Value::bool(gv_opt.is_some()), key_size, val_size))
     }
 
     /// Compute the size of a table.
     fn length(&mut self, context: &NativeTableContext) -> PartialVMResult<(u64, usize, usize)> {
-        let remote_size = context
-            .resolver
-            .table_size(&self.handle)
-            .map_err(|err| partial_extension_error(format!("remote table size failed: {}", err)))?;
+        let remote_size = if self.new_table {
+            0
+        } else {
+            context.resolver.table_size(&self.handle).map_err(|err| {
+                partial_extension_error(format!("remote table size failed: {}", err))
+            })?
+        };
         let effective_size = (remote_size as i128) + (self.size_delta as i128);
         if effective_size < 0 {
             Err(partial_extension_error("inconsistent table size"))
@@ -344,7 +369,7 @@ impl Table {
     /// Gets the global value of an entry in the table. Attempts to retrieve a value from
     /// the resolver if needed. Aborts if the value does not exists. Also returns the size
     /// of the key and value (if a value needs to be fetched from remote) for cost computation.
-    fn global_value(
+    fn global_value_if_exists(
         &mut self,
         context: &NativeTableContext,
         key: &Value,
@@ -352,9 +377,10 @@ impl Table {
         let key_bytes = serialize(&self.key_layout, key)?;
         let key_size = key_bytes.len();
         let mut val_size = 0;
+
         if !self.content.contains_key(&key_bytes) {
             // Try to retrieve a value from the remote resolver.
-            match context
+            let gv = match context
                 .resolver
                 .resolve_table_entry(&self.handle, &key_bytes)
                 .map_err(|err| {
@@ -363,18 +389,19 @@ impl Table {
                 Some(val_bytes) => {
                     val_size = val_bytes.len();
                     let val = deserialize(&self.value_layout, &val_bytes)?;
-                    self.content
-                        .entry(key_bytes.clone())
-                        .or_insert(GlobalValue::cached(val)?);
+                    GlobalValue::cached(val)?
                 }
-                None => return Ok((None, key_size, val_size)),
-            }
+                None => GlobalValue::none(),
+            };
+            self.content.insert(key_bytes.clone(), gv);
         }
-        Ok((
-            Some(self.content.get_mut(&key_bytes).unwrap()),
-            key_size,
-            val_size,
-        ))
+
+        let gv = self.content.get_mut(&key_bytes).unwrap();
+        if gv.exists()? {
+            Ok((Some(gv), key_size, val_size))
+        } else {
+            Ok((None, key_size, val_size))
+        }
     }
 }
 
@@ -401,9 +428,10 @@ pub fn table_natives(table_addr: AccountAddress) -> NativeFunctionTable {
 
 fn native_new_table_handle(
     context: &mut NativeContext,
-    mut _ty_args: Vec<Type>,
+    ty_args: Vec<Type>,
     args: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
+    assert!(ty_args.len() == 3);
     assert!(args.is_empty());
 
     let table_context = context.extensions().get::<NativeTableContext>();
@@ -417,7 +445,9 @@ fn native_new_table_handle(
     Digest::update(&mut digest, table_data.new_tables.len().to_be_bytes());
     let bytes: [u8; 16] = digest.finalize()[0..16].try_into().unwrap();
     let id = u128::from_be_bytes(bytes);
-    assert!(table_data.new_tables.insert(TableHandle(id)));
+    let handle = TableHandle(id);
+    assert!(table_data.new_tables.insert(handle));
+    table_data.new_table(context, handle, &ty_args[0], &ty_args[2])?;
 
     Ok(NativeResult::ok(
         table_context
@@ -446,7 +476,7 @@ fn native_add_box(
         .read_ref()?;
     let handle = get_table_handle(&pop_arg!(args, StructRef))?;
 
-    let table = table_data.get_or_create_table(context, handle, &ty_args[0], &ty_args[2])?;
+    let table = table_data.get_table(context, handle, &ty_args[0], &ty_args[2])?;
     let status = table.insert(table_context, &key, val);
     let (key_size, val_size) = status?;
 
@@ -471,7 +501,7 @@ fn native_length_box(
 
     let handle = get_table_handle(&pop_arg!(args, StructRef))?;
 
-    let table = table_data.get_or_create_table(context, handle, &ty_args[0], &ty_args[2])?;
+    let table = table_data.get_table(context, handle, &ty_args[0], &ty_args[2])?;
     let (len, key_size, val_size) = table.length(table_context)?;
 
     Ok(NativeResult::ok(
@@ -500,7 +530,7 @@ fn native_borrow_box(
         .read_ref()?;
     let handle = get_table_handle(&pop_arg!(args, StructRef))?;
 
-    let table = table_data.get_or_create_table(context, handle, &ty_args[0], &ty_args[2])?;
+    let table = table_data.get_table(context, handle, &ty_args[0], &ty_args[2])?;
     let (val, key_size, val_size) = table.borrow_global(table_context, &key)?;
 
     Ok(NativeResult::ok(
@@ -529,7 +559,7 @@ fn native_contains_box(
         .read_ref()?;
     let handle = get_table_handle(&pop_arg!(args, StructRef))?;
 
-    let table = table_data.get_or_create_table(context, handle, &ty_args[0], &ty_args[2])?;
+    let table = table_data.get_table(context, handle, &ty_args[0], &ty_args[2])?;
     let (val, key_size, val_size) = table.contains(table_context, &key)?;
 
     Ok(NativeResult::ok(
@@ -557,7 +587,7 @@ fn native_remove_box(
         .value_as::<Reference>()?
         .read_ref()?;
     let handle = get_table_handle(&pop_arg!(args, StructRef))?;
-    let table = table_data.get_or_create_table(context, handle, &ty_args[0], &ty_args[2])?;
+    let table = table_data.get_table(context, handle, &ty_args[0], &ty_args[2])?;
     let (val, key_size, val_size) = table.remove(table_context, &key)?;
 
     Ok(NativeResult::ok(
@@ -580,7 +610,7 @@ fn native_destroy_empty_box(
     let mut table_data = table_context.table_data.borrow_mut();
 
     let handle = get_table_handle(&pop_arg!(args, StructRef))?;
-    let table = table_data.get_or_create_table(context, handle, &ty_args[0], &ty_args[2])?;
+    let table = table_data.get_table(context, handle, &ty_args[0], &ty_args[2])?;
     let (key_size, val_size) = table.destroy_empty(table_context)?;
 
     assert!(table_data.removed_tables.insert(handle));

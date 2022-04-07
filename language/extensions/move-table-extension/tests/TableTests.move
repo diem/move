@@ -52,11 +52,16 @@ module Extensions::TableTests {
     #[test]
     fun test_length() {
         let t = T::new<u64, u64>();
+        assert!(T::length(&t) == 0, 1);
+
         T::add(&mut t, &1, 2);
         T::add(&mut t, &2, 2);
-        assert!(T::length(&t) == 2, 1);
+        assert!(T::length(&t) == 2, 2);
         T::remove(&mut t, &1);
-        assert!(T::length(&t) == 1, 2);
+        assert!(T::length(&t) == 1, 3);
+        T::remove(&mut t, &2);
+        assert!(T::length(&t) == 0, 4);
+
         T::drop_unchecked(t)
     }
 
@@ -78,6 +83,7 @@ module Extensions::TableTests {
 
         let v = T::remove(&mut t, &42);
         assert!(v == 1012, 108);
+        assert!(!T::contains(&t, &42), 109);
 
         move_to(&s, S { t });
 
@@ -213,5 +219,45 @@ module Extensions::TableTests {
         move_to(&s, S { t });
     }
 
+    #[test]
+    fun test_add_after_remove() {
+        let t = T::new<u64, u64>();
+        T::add(&mut t, &42, 42);
+        let forty_two = T::remove(&mut t, &42);
+        assert!(forty_two == 42, 101);
 
+        T::add(&mut t, &42, 0);
+        let zero = T::borrow(&mut t, &42);
+        assert!(*zero == 0, 102);
+
+        T::drop_unchecked(t)
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 25524)]
+    fun test_remove_removed() {
+        let t = T::new<u64, u64>();
+        T::add(&mut t, &42, 42);
+        let forty_two = T::remove(&mut t, &42);
+        assert!(forty_two == 42, 101);
+
+        // remove removed value
+        let _r = T::remove(&mut t, &42);
+
+        T::drop_unchecked(t)
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 25524)]
+    fun test_borrow_removed() {
+        let t = T::new<u64, u64>();
+        T::add(&mut t, &42, 42);
+        let forty_two = T::remove(&mut t, &42);
+        assert!(forty_two == 42, 101);
+
+        // borrow removed value
+        let _r = T::borrow(&mut t, &42);
+
+        T::drop_unchecked(t)
+    }
 }
