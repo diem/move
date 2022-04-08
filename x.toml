@@ -9,8 +9,8 @@ prefix = "sccache/diem/"
 public = true
 region = "us-west-2"
 endpoint = "https://s3-us-west-2.amazonaws.com"
-required-cargo-home = "/opt/cargo/"
-required-git-home = "/opt/git/diem"
+required-cargo-home = "/opt/cargo"
+required-git-home = "/opt/git/move"
 envs = [
    #To debug sccache uncomment the two lines below.
    #["SCCACHE_ERROR_LOG","/tmp/sccache_log"],
