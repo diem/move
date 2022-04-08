@@ -49,7 +49,7 @@ impl Display for TableHandle {
 }
 
 /// A table change set.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct TableChangeSet {
     pub new_tables: BTreeSet<TableHandle>,
     pub removed_tables: BTreeSet<TableHandle>,
@@ -57,6 +57,7 @@ pub struct TableChangeSet {
 }
 
 /// A change of a single table.
+#[derive(Debug)]
 pub struct TableChange {
     pub entries: BTreeMap<Vec<u8>, Option<Vec<u8>>>,
     pub base_size: u64,
@@ -218,16 +219,14 @@ impl NativeTableContext {
                     _ => {}
                 }
             }
-            if !entries.is_empty() {
-                changes.insert(
-                    handle,
-                    TableChange {
-                        entries,
-                        base_size,
-                        size_delta,
-                    },
-                );
-            }
+            changes.insert(
+                handle,
+                TableChange {
+                    entries,
+                    base_size,
+                    size_delta,
+                },
+            );
         }
         Ok(TableChangeSet {
             new_tables,
@@ -269,12 +268,15 @@ impl TableData {
         new_table: bool,
     ) -> PartialVMResult<&mut Table> {
         if let Entry::Vacant(e) = self.tables.entry(handle) {
+            let table_context = context.extensions().get::<NativeTableContext>();
             let key_layout = get_type_layout(context, key_ty)?;
             let value_layout = get_type_layout(context, value_ty)?;
             let base_size = if new_table {
+                if let Ok(table_size) = table_context.resolver.table_size(&handle) {
+                    assert_eq!(table_size, 0);
+                }
                 0
             } else {
-                let table_context = context.extensions().get::<NativeTableContext>();
                 table_context.resolver.table_size(&handle).map_err(|e| {
                     partial_extension_error(format!("table_size() failed with {}", e))
                 })? as u64
