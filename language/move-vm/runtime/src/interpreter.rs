@@ -490,7 +490,8 @@ impl Interpreter {
         debug_writeln!(buf)?;
         debug_writeln!(buf, "        Locals:")?;
         if func.local_count() > 0 {
-            values::debug::print_locals(buf, &frame.locals)?;
+            // see REFERENCE SAFETY EXPLANATION in values
+            unsafe { values::debug::print_locals(buf, &frame.locals)? };
             debug_writeln!(buf)?;
         } else {
             debug_writeln!(buf, "            (none)")?;
@@ -515,7 +516,8 @@ impl Interpreter {
             // TODO: Currently we do not know the types of the values on the operand stack.
             // Revisit.
             debug_write!(buf, "    [{}] ", idx)?;
-            values::debug::print_value(buf, val)?;
+            // see REFERENCE SAFETY EXPLANATION in values
+            unsafe { values::debug::print_value(buf, val)? };
             debug_writeln!(buf)?;
         }
         Ok(())
@@ -559,10 +561,28 @@ impl Interpreter {
             }
             internal_state.push_str(format!("{}* {:?}\n", i, code[pc]).as_str());
         }
-        internal_state.push_str(format!("Locals:\n{}\n", current_frame.locals).as_str());
+        let locals_str = {
+            let mut buf = String::new();
+            // see REFERENCE SAFETY EXPLANATION in values
+            let res = unsafe { values::debug::print_locals(&mut buf, &current_frame.locals) };
+            match res {
+                Ok(()) => buf,
+                Err(err) => format!("!!!ERRROR COULD NOT PRINT LOCALS {:?}!!!", err),
+            }
+        };
+        internal_state.push_str(format!("Locals:\n{}\n", locals_str).as_str());
         internal_state.push_str("Operand Stack:\n");
         for value in &self.operand_stack.0 {
-            internal_state.push_str(format!("{}\n", value).as_str());
+            let value_str = {
+                let mut buf = String::new();
+                // see REFERENCE SAFETY EXPLANATION in values
+                let res = unsafe { values::debug::print_value(&mut buf, value) };
+                match res {
+                    Ok(()) => buf,
+                    Err(err) => format!("!!!ERRROR COULD NOT PRINT VALUE {:?}!!!", err),
+                }
+            };
+            internal_state.push_str(format!("{}\n", value_str).as_str());
         }
         internal_state
     }
@@ -927,7 +947,8 @@ impl Frame {
                     }
                     Bytecode::ReadRef => {
                         let reference = interpreter.operand_stack.pop_as::<Reference>()?;
-                        let value = reference.read_ref()?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let value = unsafe { reference.read_ref() };
                         gas_status.charge_instr_with_size(Opcodes::READ_REF, value.size())?;
                         interpreter.operand_stack.push(value)?;
                     }
@@ -935,7 +956,10 @@ impl Frame {
                         let reference = interpreter.operand_stack.pop_as::<Reference>()?;
                         let value = interpreter.operand_stack.pop()?;
                         gas_status.charge_instr_with_size(Opcodes::WRITE_REF, value.size())?;
-                        reference.write_ref(value)?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        unsafe {
+                            reference.write_ref(value)?;
+                        }
                     }
                     Bytecode::CastU8 => {
                         gas_status.charge_instr(Opcodes::CAST_U8)?;
@@ -1052,18 +1076,20 @@ impl Frame {
                         let rhs = interpreter.operand_stack.pop()?;
                         gas_status
                             .charge_instr_with_size(Opcodes::EQ, lhs.size().add(rhs.size()))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
                         interpreter
                             .operand_stack
-                            .push(Value::bool(lhs.equals(&rhs)?))?;
+                            .push(Value::bool(unsafe { lhs.equals(&rhs)? }))?;
                     }
                     Bytecode::Neq => {
                         let lhs = interpreter.operand_stack.pop()?;
                         let rhs = interpreter.operand_stack.pop()?;
                         gas_status
                             .charge_instr_with_size(Opcodes::NEQ, lhs.size().add(rhs.size()))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
                         interpreter
                             .operand_stack
-                            .push(Value::bool(!lhs.equals(&rhs)?))?;
+                            .push(Value::bool(unsafe { !lhs.equals(&rhs)? }))?;
                     }
                     Bytecode::MutBorrowGlobal(sd_idx) | Bytecode::ImmBorrowGlobal(sd_idx) => {
                         let addr = interpreter.operand_stack.pop_as::<AccountAddress>()?;
@@ -1110,11 +1136,14 @@ impl Frame {
                     Bytecode::MoveTo(sd_idx) => {
                         let resource = interpreter.operand_stack.pop()?;
                         let signer_reference = interpreter.operand_stack.pop_as::<StructRef>()?;
-                        let addr = signer_reference
-                            .borrow_field(0)?
-                            .value_as::<Reference>()?
-                            .read_ref()?
-                            .value_as::<AccountAddress>()?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let addr = unsafe {
+                            signer_reference
+                                .borrow_field(0)?
+                                .value_as::<Reference>()?
+                                .read_ref()
+                                .value_as::<AccountAddress>()?
+                        };
                         let ty = resolver.get_struct_type(*sd_idx);
                         // REVIEW: Can we simplify Interpreter::move_to?
                         let size = interpreter.move_to(data_store, addr, &ty, resource)?;
@@ -1123,11 +1152,14 @@ impl Frame {
                     Bytecode::MoveToGeneric(si_idx) => {
                         let resource = interpreter.operand_stack.pop()?;
                         let signer_reference = interpreter.operand_stack.pop_as::<StructRef>()?;
-                        let addr = signer_reference
-                            .borrow_field(0)?
-                            .value_as::<Reference>()?
-                            .read_ref()?
-                            .value_as::<AccountAddress>()?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let addr = unsafe {
+                            signer_reference
+                                .borrow_field(0)?
+                                .value_as::<Reference>()?
+                                .read_ref()
+                                .value_as::<AccountAddress>()?
+                        };
                         let ty = resolver.instantiate_generic_type(*si_idx, self.ty_args())?;
                         let size = interpreter.move_to(data_store, addr, &ty, resource)?;
                         gas_status.charge_instr_with_size(Opcodes::MOVE_TO_GENERIC, size)?;
@@ -1149,46 +1181,60 @@ impl Frame {
                         let elements = interpreter.operand_stack.popn(*num as u16)?;
                         let size = AbstractMemorySize::new(*num);
                         gas_status.charge_instr_with_size(Opcodes::VEC_PACK, size)?;
-                        let value = Vector::pack(resolver.single_type_at(*si), elements)?;
+                        let value = Vector::pack(
+                            &resolver.instantiate_single_type(*si, self.ty_args())?,
+                            elements,
+                        )?;
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecLen(si) => {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_LEN)?;
-                        let value = vec_ref.len(resolver.single_type_at(*si))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.len(vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecImmBorrow(si) => {
                         let idx = interpreter.operand_stack.pop_as::<u64>()? as usize;
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_IMM_BORROW)?;
-                        let value = vec_ref.borrow_elem(idx, resolver.single_type_at(*si))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.borrow_elem(idx, vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecMutBorrow(si) => {
                         let idx = interpreter.operand_stack.pop_as::<u64>()? as usize;
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_MUT_BORROW)?;
-                        let value = vec_ref.borrow_elem(idx, resolver.single_type_at(*si))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.borrow_elem(idx, vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecPushBack(si) => {
                         let elem = interpreter.operand_stack.pop()?;
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr_with_size(Opcodes::VEC_PUSH_BACK, elem.size())?;
-                        vec_ref.push_back(elem, resolver.single_type_at(*si))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        unsafe { vec_ref.push_back(elem, vec_ty_arg)? };
                     }
                     Bytecode::VecPopBack(si) => {
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_POP_BACK)?;
-                        let value = vec_ref.pop(resolver.single_type_at(*si))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let value = unsafe { vec_ref.pop(vec_ty_arg)? };
                         interpreter.operand_stack.push(value)?;
                     }
                     Bytecode::VecUnpack(si, num) => {
                         let vec_val = interpreter.operand_stack.pop_as::<Vector>()?;
                         let size = AbstractMemorySize::new(*num);
                         gas_status.charge_instr_with_size(Opcodes::VEC_UNPACK, size)?;
-                        let elements = vec_val.unpack(resolver.single_type_at(*si), *num)?;
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        let elements = vec_val.unpack(vec_ty_arg, *num)?;
                         for value in elements {
                             interpreter.operand_stack.push(value)?;
                         }
@@ -1198,7 +1244,9 @@ impl Frame {
                         let idx1 = interpreter.operand_stack.pop_as::<u64>()? as usize;
                         let vec_ref = interpreter.operand_stack.pop_as::<VectorRef>()?;
                         gas_status.charge_instr(Opcodes::VEC_SWAP)?;
-                        vec_ref.swap(idx1, idx2, resolver.single_type_at(*si))?;
+                        // see REFERENCE SAFETY EXPLANATION in values
+                        let vec_ty_arg = &resolver.instantiate_single_type(*si, self.ty_args())?;
+                        unsafe { vec_ref.swap(idx1, idx2, vec_ty_arg)? };
                     }
                 }
                 // invariant: advance to pc +1 is iff instruction at pc executed without aborting
