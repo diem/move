@@ -14,6 +14,8 @@ module 0x1::FortyTwo {
     // TODO: move-to-yul does not support literal string.
     #[callable(sig=b"forty_two_as_string() returns (string)"), pure]
     public fun forty_two_as_string(): vector<u8> {
+        // TODO: Fix this.
+        // let _ = b"forty two"; // Test for the use of duplicated string literals
         b"forty two"
     }
 
