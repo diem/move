@@ -57,10 +57,6 @@ impl TableResolver for BlankStorage {
         Ok(None)
     }
 
-    fn table_size(&self, _handle: &TableHandle) -> Result<usize, Error> {
-        Ok(0)
-    }
-
     fn operation_cost(
         &self,
         _op: TableOperation,
@@ -342,13 +338,6 @@ impl TableResolver for InMemoryStorage {
         key: &[u8],
     ) -> std::result::Result<Option<Vec<u8>>, Error> {
         Ok(self.tables.get(handle).and_then(|t| t.get(key).cloned()))
-    }
-
-    fn table_size(&self, handle: &TableHandle) -> std::result::Result<usize, Error> {
-        self.tables
-            .get(handle)
-            .map(|t| t.len())
-            .ok_or_else(|| anyhow!("table undefined"))
     }
 
     fn operation_cost(
