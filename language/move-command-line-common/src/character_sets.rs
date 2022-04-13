@@ -18,7 +18,7 @@ pub fn is_permitted_printable_char(c: char) -> bool {
 /// The only permitted newline character is \n. All others are invalid.
 pub fn is_permitted_newline_char(c: char) -> bool {
     let x = c as u32;
-    x == 0x0A
+    x == 0x0A || x == 0x0D
 }
 
 /// Determine if a character is permitted character.
