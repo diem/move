@@ -67,7 +67,7 @@ jobs:
           pattern: 'docker/ci\|scripts/dev_setup.sh'
 
   dev-setup-sh-test:
-    runs-on: ubuntu-20.04-xl
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: prepare
     if: ${{ needs.prepare.outputs.test-dev-setup == 'true' }}
@@ -77,8 +77,6 @@ jobs:
         target_os: [github]
     steps:
       - uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - name: build image with dev-setup.sh
         run: docker build -f docker/ci/${{ matrix.target_os }}/Dockerfile -t diem/build_environment:test .
       - name: Early terminate workflow
@@ -128,9 +126,6 @@ jobs:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
       - uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0 #get all the history!!!
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
         with:
@@ -173,8 +168,6 @@ jobs:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
       - uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
       - name: compile and install move-cli
@@ -212,8 +205,6 @@ jobs:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
       - uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/build-setup
       - uses: actions/cache@v2.1.6
         with:
@@ -276,8 +267,6 @@ jobs:
       - prepare
     steps:
       - uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
       - name: Use Node.js 14
         uses: actions/setup-node@v2.4.0
         with:
