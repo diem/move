@@ -7,6 +7,7 @@ use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::CostTable,
     identifier::Identifier,
+    language_storage::TypeTag,
     value::MoveTypeLayout,
     vm_status::{StatusCode, StatusType},
 };
@@ -170,6 +171,10 @@ impl<'a> NativeContext<'a> {
 
     pub fn events(&self) -> &Vec<(Vec<u8>, u64, Type, MoveTypeLayout, Value)> {
         self.data_store.events()
+    }
+
+    pub fn type_to_type_tag(&self, ty: &Type) -> PartialVMResult<TypeTag> {
+        self.resolver.loader().type_to_type_tag(ty)
     }
 
     pub fn type_to_type_layout(&self, ty: &Type) -> PartialVMResult<Option<MoveTypeLayout>> {

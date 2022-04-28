@@ -4,6 +4,7 @@
 use move_symbol_pool::Symbol;
 
 #[test]
+#[allow(unused_must_use)]
 fn test_from() {
     Symbol::from("this shouldn't panic");
 }

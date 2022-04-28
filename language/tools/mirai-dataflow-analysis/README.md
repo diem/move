@@ -18,7 +18,7 @@ setup, please follow the steps below:
 2. Install Soufflé and / or Differential Datalog.
 3. Set the nightly version of Rust for this crate using `rustup override set nightly-YYYY-MM-DD`.
     - See [rust-toolchain](./rust_toolchain)) to determine the current compatible version, which in turn
-    must match the version [currently in use by MIRAI](https://github.com/facebookexperimental/MIRAI/blob/main/rust-toolchain).
+    must match the version [currently in use by MIRAI](https://github.com/facebookexperimental/MIRAI/blob/main/rust-toolchain.toml).
 
 Please note that the MIRAI's [is_excluded](https://github.com/facebookexperimental/MIRAI/blob/49c8add3706d49f82d96f3ace2c01c738ea04dc2/checker/src/callbacks.rs#L145) function may have to be modified _before_ installing MIRAI to not exclude certain crates.
 

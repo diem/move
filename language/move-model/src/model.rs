@@ -2841,6 +2841,7 @@ pub struct AbilityConstraint(pub AbilitySet);
 pub struct Parameter(pub Symbol, pub Type);
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct FunctionData {
     /// Name of this function.
     name: Symbol,
