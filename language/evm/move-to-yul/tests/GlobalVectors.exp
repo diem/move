@@ -435,7 +435,7 @@ object "test_A2_GlobalVectors_test_borrow_mut_global" {
         }
     }
 }
-===> Test result of GlobalVectors::test_borrow_mut_global: Succeed(Stopped) (used_gas=117245): []
+===> Test result of GlobalVectors::test_borrow_mut_global: Succeed(Stopped) (used_gas=117242): []
 
 // test of GlobalVectors::test_move_from
 /* =======================================
@@ -989,7 +989,7 @@ object "test_A2_GlobalVectors_test_move_from" {
         }
     }
 }
-===> Test result of GlobalVectors::test_move_from: Succeed(Stopped) (used_gas=96948): []
+===> Test result of GlobalVectors::test_move_from: Succeed(Stopped) (used_gas=96925): []
 
 // test of GlobalVectors::test_move_from_vector_of_struct
 /* =======================================
@@ -1558,7 +1558,7 @@ object "test_A2_GlobalVectors_test_move_from_vector_of_struct" {
         }
     }
 }
-===> Test result of GlobalVectors::test_move_from_vector_of_struct: Succeed(Stopped) (used_gas=186316): []
+===> Test result of GlobalVectors::test_move_from_vector_of_struct: Succeed(Stopped) (used_gas=186303): []
 
 // test of GlobalVectors::test_move_from_vector_of_vector
 /* =======================================
@@ -2155,7 +2155,7 @@ object "test_A2_GlobalVectors_test_move_from_vector_of_vector" {
         }
     }
 }
-===> Test result of GlobalVectors::test_move_from_vector_of_vector: Succeed(Stopped) (used_gas=243916): []
+===> Test result of GlobalVectors::test_move_from_vector_of_vector: Succeed(Stopped) (used_gas=243883): []
 
 // test of GlobalVectors::test_move_to
 /* =======================================
@@ -2639,7 +2639,7 @@ object "test_A2_GlobalVectors_test_move_to" {
         }
     }
 }
-===> Test result of GlobalVectors::test_move_to: Succeed(Stopped) (used_gas=120162): []
+===> Test result of GlobalVectors::test_move_to: Succeed(Stopped) (used_gas=120145): []
 
 // test of GlobalVectors::test_move_to_vector_of_struct
 /* =======================================
@@ -3190,7 +3190,7 @@ object "test_A2_GlobalVectors_test_move_to_vector_of_struct" {
         }
     }
 }
-===> Test result of GlobalVectors::test_move_to_vector_of_struct: Succeed(Stopped) (used_gas=233775): []
+===> Test result of GlobalVectors::test_move_to_vector_of_struct: Succeed(Stopped) (used_gas=233758): []
 
 // test of GlobalVectors::test_move_to_vector_of_vector
 /* =======================================
@@ -3760,7 +3760,7 @@ object "test_A2_GlobalVectors_test_move_to_vector_of_vector" {
         }
     }
 }
-===> Test result of GlobalVectors::test_move_to_vector_of_vector: Succeed(Stopped) (used_gas=304374): []
+===> Test result of GlobalVectors::test_move_to_vector_of_vector: Succeed(Stopped) (used_gas=304333): []
 
 // test of GlobalVectors::test_pop_back_global
 /* =======================================
@@ -4231,7 +4231,7 @@ object "test_A2_GlobalVectors_test_pop_back_global" {
         }
     }
 }
-===> Test result of GlobalVectors::test_pop_back_global: Succeed(Stopped) (used_gas=120810): []
+===> Test result of GlobalVectors::test_pop_back_global: Succeed(Stopped) (used_gas=120798): []
 
 // test of GlobalVectors::test_pop_back_struct_global
 /* =======================================
@@ -4842,7 +4842,7 @@ object "test_A2_GlobalVectors_test_pop_back_struct_global" {
         }
     }
 }
-===> Test result of GlobalVectors::test_pop_back_struct_global: Succeed(Stopped) (used_gas=188712): []
+===> Test result of GlobalVectors::test_pop_back_struct_global: Succeed(Stopped) (used_gas=188703): []
 
 // test of GlobalVectors::test_push_back_global
 /* =======================================
@@ -5430,7 +5430,7 @@ object "test_A2_GlobalVectors_test_push_back_global" {
         }
     }
 }
-===> Test result of GlobalVectors::test_push_back_global: Succeed(Stopped) (used_gas=150817): []
+===> Test result of GlobalVectors::test_push_back_global: Succeed(Stopped) (used_gas=150794): []
 
 // test of GlobalVectors::test_push_back_struct_global
 /* =======================================
@@ -6031,7 +6031,7 @@ object "test_A2_GlobalVectors_test_push_back_struct_global" {
         }
     }
 }
-===> Test result of GlobalVectors::test_push_back_struct_global: Succeed(Stopped) (used_gas=328444): []
+===> Test result of GlobalVectors::test_push_back_struct_global: Succeed(Stopped) (used_gas=328432): []
 
 // test of GlobalVectors::test_read_ref_copy
 /* =======================================
@@ -6482,7 +6482,7 @@ object "test_A2_GlobalVectors_test_read_ref_copy" {
         }
     }
 }
-===> Test result of GlobalVectors::test_read_ref_copy: Succeed(Stopped) (used_gas=114561): []
+===> Test result of GlobalVectors::test_read_ref_copy: Succeed(Stopped) (used_gas=114555): []
 
 // test of GlobalVectors::test_swap_global
 /* =======================================
@@ -6996,4 +6996,4 @@ object "test_A2_GlobalVectors_test_swap_global" {
         }
     }
 }
-===> Test result of GlobalVectors::test_swap_global: Succeed(Stopped) (used_gas=123136): []
+===> Test result of GlobalVectors::test_swap_global: Succeed(Stopped) (used_gas=123119): []
