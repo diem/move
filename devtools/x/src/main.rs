@@ -39,6 +39,7 @@ struct Args {
 }
 
 #[derive(Debug, Parser)]
+#[clap(author, version, about)]
 enum Command {
     #[clap(name = "bench")]
     /// Run `cargo bench`
