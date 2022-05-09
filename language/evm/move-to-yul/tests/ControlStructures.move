@@ -1,4 +1,7 @@
 // Tests basic control structures.
+//
+// experiment: apply-cfg-to-scf
+//
 #[contract]
 module 0x2::M {
   #[callable]

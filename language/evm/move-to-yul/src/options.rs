@@ -79,4 +79,9 @@ impl Options {
     pub fn generate_source_info(&self) -> bool {
         !self.testing || self.experiment_on(Experiment::CAPTURE_SOURCE_INFO)
     }
+
+    /// Returns true if control flow graph to structured control flow is applied.
+    pub fn apply_cfg_to_scf(&self) -> bool {
+        self.experiment_on(Experiment::APPLY_CFG_TO_SCF)
+    }
 }

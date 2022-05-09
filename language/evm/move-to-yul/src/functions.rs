@@ -14,6 +14,7 @@ use move_stackless_bytecode::{
     function_target_pipeline::FunctionVariant,
     stackless_bytecode::{Bytecode, Constant, Label, Operation},
     stackless_control_flow_graph::{BlockContent, BlockId, StacklessControlFlowGraph},
+    stackless_structured_control_flow::{compute_label_map, generate_scg_vec, StacklessSCG, StacklessSCGBlockKind},
 };
 use sha3::{Digest, Keccak256};
 use std::collections::{btree_map::Entry, BTreeMap};
@@ -106,48 +107,153 @@ impl<'a> FunctionGenerator<'a> {
             // Compute control flow graph, entry block, and label map
             let code = target.data.code.as_slice();
             let cfg = StacklessControlFlowGraph::new_forward(code);
-            let entry_bb = Self::get_actual_entry_block(&cfg);
-            let label_map = Self::compute_label_map(&cfg, code);
 
-            // Emit state machine to represent control flow.
-            // TODO: Eliminate the need for this, see also
-            //    https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
-            if cfg.successors(entry_bb).iter().all(|b| cfg.is_dummmy(*b)) {
-                // In this trivial case, we have only one block and can omit the state machine
-                if let BlockContent::Basic { lower, upper } = cfg.content(entry_bb) {
-                    for offs in *lower..*upper + 1 {
-                        self.bytecode(ctx, fun_id, target, &label_map, &code[offs as usize], false);
-                    }
-                } else {
-                    panic!("effective entry block is not basic")
-                }
+            if !ctx.options.apply_cfg_to_scf() {
+                self.emit_cfg(&cfg, code, ctx, fun_id, target);
             } else {
-                emitln!(ctx.writer, "let $block := {}", entry_bb);
-                emit!(ctx.writer, "for {} true {} ");
-                ctx.emit_block(|| {
-                    emitln!(ctx.writer, "switch $block");
-                    for blk_id in &cfg.blocks() {
-                        if let BlockContent::Basic { lower, upper } = cfg.content(*blk_id) {
-                            // Emit code for this basic block.
-                            emit!(ctx.writer, "case {} ", blk_id);
-                            ctx.emit_block(|| {
-                                for offs in *lower..*upper + 1 {
-                                    self.bytecode(
-                                        ctx,
-                                        fun_id,
-                                        target,
-                                        &label_map,
-                                        &code[offs as usize],
-                                        true,
-                                    );
-                                }
-                            })
-                        }
-                    }
-                })
+                self.emit_scf_from_cfg(&cfg, code, ctx, fun_id, target);
             }
         });
         emitln!(ctx.writer)
+    }
+
+    fn emit_cfg(
+        &mut self,
+        cfg: &StacklessControlFlowGraph,
+        code: &[Bytecode],
+        ctx: &Context,
+        fun_id: &QualifiedInstId<FunId>,
+        target: &FunctionTarget,
+    ) {
+        let entry_bb = Self::get_actual_entry_block(cfg);
+        let label_map = compute_label_map(cfg, code);
+        // Emit state machine to represent control flow.
+        // TODO: Eliminate the need for this, see also
+        //    https://medium.com/leaningtech/solving-the-structured-control-flow-problem-once-and-for-all-5123117b1ee2
+        if cfg.successors(entry_bb).iter().all(|b| cfg.is_dummmy(*b)) {
+            // In this trivial case, we have only one block and can omit the state machine
+            if let BlockContent::Basic { lower, upper } = cfg.content(entry_bb) {
+                for offs in *lower..*upper + 1 {
+                    self.bytecode(
+                        ctx,
+                        fun_id,
+                        target,
+                        &label_map,
+                        &code[offs as usize],
+                        false,
+                        false,
+                    );
+                }
+            } else {
+                panic!("effective entry block is not basic")
+            }
+        } else {
+            emitln!(ctx.writer, "let $block := {}", entry_bb);
+            emit!(ctx.writer, "for {} true {} ");
+            ctx.emit_block(|| {
+                emitln!(ctx.writer, "switch $block");
+                for blk_id in &cfg.blocks() {
+                    if let BlockContent::Basic { lower, upper } = cfg.content(*blk_id) {
+                        // Emit code for this basic block.
+                        emit!(ctx.writer, "case {} ", blk_id);
+                        ctx.emit_block(|| {
+                            for offs in *lower..*upper + 1 {
+                                self.bytecode(
+                                    ctx,
+                                    fun_id,
+                                    target,
+                                    &label_map,
+                                    &code[offs as usize],
+                                    true,
+                                    false,
+                                );
+                            }
+                        })
+                    }
+                }
+            })
+        }
+    }
+
+    fn emit_scf_from_cfg(
+        &mut self,
+        cfg: &StacklessControlFlowGraph,
+        code: &[Bytecode],
+        ctx: &Context,
+        fun_id: &QualifiedInstId<FunId>,
+        target: &FunctionTarget,
+    ) {
+        let scg_vec = generate_scg_vec(cfg, code);
+        for scg in scg_vec {
+            self.emit_scg(&scg, &cfg, code, ctx, fun_id, target);
+        }
+    }
+
+    pub fn emit_scg(
+        &mut self,
+        scg: &StacklessSCG,
+        cfg: &StacklessControlFlowGraph,
+        code: &[Bytecode],
+        ctx: &Context,
+        fun_id: &QualifiedInstId<FunId>,
+        target: &FunctionTarget,
+    ) {
+        let label_map = compute_label_map(cfg, code);
+        match scg {
+            StacklessSCG::BasicBlock {
+                start_offset,
+                end_offset,
+                kind,
+            } => {
+                ctx.emit_block(|| {
+                    for offs in *start_offset..*end_offset + 1 {
+                        self.bytecode(
+                            ctx,
+                            fun_id,
+                            target,
+                            &label_map,
+                            &code[offs as usize],
+                            false,
+                            true,
+                        );
+                    }
+                    match kind {
+                        StacklessSCGBlockKind::Break => {
+                            emitln!(ctx.writer, "break");
+                        }
+                        StacklessSCGBlockKind::Continue => {
+                            emitln!(ctx.writer, "continue");
+                        }
+                        _ => {}
+                    }
+                });
+            }
+            StacklessSCG::IfBlock {
+                cond,
+                if_true,
+                if_false,
+            } => {
+                emitln!(ctx.writer, "switch $t{} ", cond);
+                emit!(ctx.writer, "case 0 ");
+                self.emit_scg(if_false, cfg, code, ctx, fun_id, target);
+                emit!(ctx.writer, "default ");
+                self.emit_scg(if_true, cfg, code, ctx, fun_id, target);
+            }
+            // TODO: need to emit codes of loops based on StacklessSCG::LoopBlock
+            // based on new bytecodes of Break and Continue
+            StacklessSCG::LoopBlock {
+                loop_header,
+                loop_body,
+            } => {
+                self.emit_scg(&*loop_header, &cfg, code, ctx, fun_id, target);
+                emit!(ctx.writer, "for {} true {} ");
+                ctx.emit_block(|| {
+                    for loop_body_scg in loop_body {
+                        self.emit_scg(loop_body_scg, &cfg, code, ctx, fun_id, target);
+                    }
+                });
+            }
+        }
     }
 
     /// Compute the locals in the given function which are borrowed from and which are not
@@ -178,22 +284,6 @@ impl<'a> FunctionGenerator<'a> {
         }
         entry_bb
     }
-
-    /// Compute a map from labels to block ids which those labels start.
-    fn compute_label_map(
-        cfg: &StacklessControlFlowGraph,
-        code: &[Bytecode],
-    ) -> BTreeMap<Label, BlockId> {
-        let mut map = BTreeMap::new();
-        for id in cfg.blocks() {
-            if let BlockContent::Basic { lower, .. } = cfg.content(id) {
-                if let Bytecode::Label(_, l) = &code[*lower as usize] {
-                    map.insert(*l, id);
-                }
-            }
-        }
-        map
-    }
 }
 
 // ================================================================================================
@@ -209,6 +299,7 @@ impl<'a> FunctionGenerator<'a> {
         label_map: &BTreeMap<Label, BlockId>,
         bc: &Bytecode,
         has_flow: bool,
+        skip_block: bool,
     ) {
         use Bytecode::*;
         emitln!(
@@ -282,19 +373,23 @@ impl<'a> FunctionGenerator<'a> {
         match bc {
             Jump(_, l) => {
                 print_loc();
-                emitln!(ctx.writer, "$block := {}", get_block(l))
+                if !skip_block {
+                    emitln!(ctx.writer, "$block := {}", get_block(l))
+                }
             }
             Branch(_, if_t, if_f, cond) => {
                 print_loc();
-                emitln!(
-                    ctx.writer,
-                    "switch {}\n\
-                     case 0  {{ $block := {} }}\n\
-                     default {{ $block := {} }}",
-                    local(cond),
-                    get_block(if_f),
-                    get_block(if_t),
-                )
+                if !skip_block {
+                    emitln!(
+                        ctx.writer,
+                        "switch {}\n\
+                         case 0  {{ $block := {} }}\n\
+                         default {{ $block := {} }}",
+                        local(cond),
+                        get_block(if_f),
+                        get_block(if_t),
+                    )
+                }
             }
             Assign(_, dest, src, _) => {
                 print_loc();

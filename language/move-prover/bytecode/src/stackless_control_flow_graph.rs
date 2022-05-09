@@ -6,20 +6,22 @@
 
 use crate::{
     function_target::FunctionTarget,
+    graph::{Graph as ProverGraph, NaturalLoop},
     stackless_bytecode::{Bytecode, Label},
 };
 use move_binary_format::file_format::CodeOffset;
 use petgraph::{dot::Dot, graph::Graph};
 use std::collections::{BTreeMap, BTreeSet};
+use std::collections::btree_map::Entry;
 
 type Map<K, V> = BTreeMap<K, V>;
 type Set<V> = BTreeSet<V>;
 pub type BlockId = CodeOffset;
 
-#[derive(Debug)]
-struct Block {
-    successors: Vec<BlockId>,
-    content: BlockContent,
+#[derive(Clone, Debug)]
+pub(crate) struct Block {
+    pub(crate) successors: Vec<BlockId>,
+    pub(crate) content: BlockContent,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -31,10 +33,11 @@ pub enum BlockContent {
     Dummy,
 }
 
+#[derive(Clone, Debug)]
 pub struct StacklessControlFlowGraph {
-    entry_block_id: BlockId,
-    blocks: Map<BlockId, Block>,
-    backward: bool,
+    pub(crate) entry_block_id: BlockId,
+    pub(crate) blocks: Map<BlockId, Block>,
+    pub(crate) backward: bool,
 }
 
 const DUMMY_ENTRANCE: BlockId = 0;
@@ -229,6 +232,43 @@ impl StacklessControlFlowGraph {
         println!("blocks = {:?}", self.blocks);
         println!("is_backward = {}", self.backward);
         println!("+=======================+");
+    }
+}
+
+impl StacklessControlFlowGraph {
+    pub fn to_prover_graph(&self) -> ProverGraph<BlockId> {
+        let nodes: Vec<BlockId> = self.blocks.keys().copied().collect();
+        let mut edges: Vec<(BlockId, BlockId)> = vec![];
+        for (block_id, block) in &self.blocks {
+            for successor_id in &block.successors {
+                edges.push((*block_id, *successor_id));
+            }
+        }
+        ProverGraph::new(DUMMY_ENTRANCE, nodes, edges)
+    }
+
+    pub fn reduce_cfg_loop(
+        &mut self,
+        graph: &ProverGraph<BlockId>,
+    ) -> Map<BlockId, Vec<NaturalLoop<BlockId>>> {
+        let mut loop_map: Map<BlockId, Vec<NaturalLoop<BlockId>>> = Map::new();
+        if let Some(loops) = graph.compute_reducible() {
+            for one_loop in loops {
+                for loop_body_block in &one_loop.loop_body {
+                    if *loop_body_block == one_loop.loop_header {continue;}
+                    self.blocks.remove(loop_body_block);
+                }
+                match loop_map.entry(one_loop.loop_header) {
+                    Entry::Vacant(e) => {
+                        e.insert(vec![one_loop]);
+                    }
+                    Entry::Occupied(e) => {
+                        e.into_mut().push(one_loop);
+                    }
+                }
+            }
+        }
+        loop_map
     }
 }
 
