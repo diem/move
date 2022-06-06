@@ -123,6 +123,7 @@ pub(crate) struct FunEntry {
     #[allow(dead_code)]
     pub fun_id: FunId,
     pub visibility: FunctionVisibility,
+    pub is_entry: bool,
     pub type_params: Vec<(Symbol, Type)>,
     pub params: Vec<(Symbol, Type)>,
     pub result_type: Type,
@@ -273,6 +274,7 @@ impl<'env> ModelBuilder<'env> {
         module_id: ModuleId,
         fun_id: FunId,
         visibility: FunctionVisibility,
+        is_entry: bool,
         type_params: Vec<(Symbol, Type)>,
         params: Vec<(Symbol, Type)>,
         result_type: Type,
@@ -283,6 +285,7 @@ impl<'env> ModelBuilder<'env> {
             module_id,
             fun_id,
             visibility,
+            is_entry,
             type_params,
             params,
             result_type,

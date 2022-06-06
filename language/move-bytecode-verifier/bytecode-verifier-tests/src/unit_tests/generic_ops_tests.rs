@@ -132,6 +132,7 @@ fn make_module() -> CompiledModule {
             FunctionDefinition {
                 function: FunctionHandleIndex(0),
                 visibility: Visibility::Public,
+                is_entry: false,
                 acquires_global_resources: vec![],
                 code: Some(CodeUnit {
                     locals: SignatureIndex(0),
@@ -142,6 +143,7 @@ fn make_module() -> CompiledModule {
             FunctionDefinition {
                 function: FunctionHandleIndex(1),
                 visibility: Visibility::Private,
+                is_entry: false,
                 acquires_global_resources: vec![],
                 code: Some(CodeUnit {
                     locals: SignatureIndex(0),
@@ -152,6 +154,7 @@ fn make_module() -> CompiledModule {
             FunctionDefinition {
                 function: FunctionHandleIndex(2),
                 visibility: Visibility::Private,
+                is_entry: false,
                 acquires_global_resources: vec![],
                 code: Some(CodeUnit {
                     locals: SignatureIndex(0),

@@ -72,7 +72,7 @@ impl<'r, 'l, S: MoveResolver> Session<'r, 'l, S> {
         args: Vec<impl Borrow<[u8]>>,
         gas_status: &mut GasStatus,
     ) -> VMResult<SerializedReturnValues> {
-        let bypass_visibility = false;
+        let bypass_declared_entry_check = false;
         self.runtime.execute_function(
             module,
             function_name,
@@ -81,7 +81,7 @@ impl<'r, 'l, S: MoveResolver> Session<'r, 'l, S> {
             &mut self.data_cache,
             gas_status,
             &mut self.native_extensions,
-            bypass_visibility,
+            bypass_declared_entry_check,
         )
     }
 
@@ -94,7 +94,7 @@ impl<'r, 'l, S: MoveResolver> Session<'r, 'l, S> {
         args: Vec<impl Borrow<[u8]>>,
         gas_status: &mut GasStatus,
     ) -> VMResult<SerializedReturnValues> {
-        let bypass_visibility = true;
+        let bypass_declared_entry_check = true;
         self.runtime.execute_function(
             module,
             function_name,
@@ -103,7 +103,7 @@ impl<'r, 'l, S: MoveResolver> Session<'r, 'l, S> {
             &mut self.data_cache,
             gas_status,
             &mut self.native_extensions,
-            bypass_visibility,
+            bypass_declared_entry_check,
         )
     }
 

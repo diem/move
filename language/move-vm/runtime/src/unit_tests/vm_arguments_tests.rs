@@ -132,6 +132,7 @@ fn make_script_with_non_linking_structs(parameters: Signature) -> Vec<u8> {
 
 fn make_module_with_function(
     visibility: Visibility,
+    is_entry: bool,
     parameters: Signature,
     return_: Signature,
     type_parameters: Vec<AbilitySet>,
@@ -204,6 +205,7 @@ fn make_module_with_function(
         function_defs: vec![FunctionDefinition {
             function: FunctionHandleIndex(0),
             visibility,
+            is_entry,
             acquires_global_resources: vec![],
             code: Some(CodeUnit {
                 locals: SignatureIndex(0),
@@ -216,7 +218,13 @@ fn make_module_with_function(
 
 // make a script function with a given signature for main.
 fn make_script_function(signature: Signature) -> (CompiledModule, Identifier) {
-    make_module_with_function(Visibility::Script, signature, Signature(vec![]), vec![])
+    make_module_with_function(
+        Visibility::Public,
+        true,
+        signature,
+        Signature(vec![]),
+        vec![],
+    )
 }
 
 struct RemoteStore {
@@ -729,6 +737,7 @@ fn check_script_function() {
     // public
     let (module, function_name) = make_module_with_function(
         Visibility::Public,
+        false,
         Signature(vec![]),
         Signature(vec![]),
         vec![],
@@ -749,6 +758,7 @@ fn check_script_function() {
     // private
     let (module, function_name) = make_module_with_function(
         Visibility::Private,
+        false,
         Signature(vec![]),
         Signature(vec![]),
         vec![],
