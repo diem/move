@@ -124,6 +124,10 @@ pub struct BuildConfig {
 
     #[clap(long = "arch", global = true, parse(try_from_str = Architecture::try_parse_from_str))]
     pub architecture: Option<Architecture>,
+
+    /// Only compile dependencies
+    #[clap(long = "only-deps", global = true)]
+    pub only_deps: bool,
 }
 
 impl Default for BuildConfig {
@@ -137,6 +141,7 @@ impl Default for BuildConfig {
             force_recompilation: false,
             additional_named_addresses: BTreeMap::new(),
             architecture: None,
+            only_deps: false,
         }
     }
 }
