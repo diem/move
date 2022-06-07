@@ -206,7 +206,7 @@ jobs:
 
   move-unit-test-framework-tests-evm:
     runs-on: ubuntu-20.04-xl
-    timeout-minutes: 30
+    timeout-minutes: 90
     needs: prepare
     steps:
       - uses: actions/checkout@v2.4.0
