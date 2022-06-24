@@ -63,6 +63,7 @@ pub fn on_text_document_sync_notification(
                 parameters.text_document.uri.path(),
                 &parameters.text_document.text,
             );
+            symbolicator_runner.run(parameters.text_document.uri.path());
         }
         lsp_types::notification::DidChangeTextDocument::METHOD => {
             let parameters =
@@ -81,7 +82,7 @@ pub fn on_text_document_sync_notification(
                 parameters.text_document.uri.path(),
                 &parameters.text.unwrap(),
             );
-            symbolicator_runner.run();
+            symbolicator_runner.run(parameters.text_document.uri.path());
         }
         lsp_types::notification::DidCloseTextDocument::METHOD => {
             let parameters =
