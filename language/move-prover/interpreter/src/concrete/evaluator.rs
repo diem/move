@@ -133,7 +133,7 @@ impl<'env> Evaluator<'env> {
                 if err == BigInt::zero() {
                     return;
                 }
-                self.record_evaluation_failure(exp, err);
+                self.record_evaluation_failure(exp, "unexpected error code");
             }
         }
     }
@@ -598,7 +598,7 @@ impl<'env> Evaluator<'env> {
             }
             // case: type domain
             ExpData::Call(node_id, Operation::TypeDomain, _) => match env.get_node_type(*node_id) {
-                MTy::Type::TypeDomain(ty) => self.unroll_type_domain(&ty),
+                MTy::Type::TypeDomain(ty) => self.unroll_type_domain(&ty, exp)?,
                 _ => unreachable!(),
             },
             // case: resource domain
@@ -1142,7 +1142,7 @@ impl<'env> Evaluator<'env> {
             None => {
                 match self
                     .global_state
-                    .get_resource(Some(true), addr, struct_inst)
+                    .get_resource_for_spec(Some(true), addr, struct_inst)
                 {
                     None => {
                         return Err(Self::eval_failure_code());
@@ -1243,15 +1243,22 @@ impl<'env> Evaluator<'env> {
         Ok(range)
     }
 
-    fn unroll_type_domain(&self, ty: &MTy::Type) -> Vec<BaseValue> {
+    fn unroll_type_domain(&self, ty: &MTy::Type, exp: &Exp) -> EvalResult<Vec<BaseValue>> {
         match ty {
-            MTy::Type::Primitive(MTy::PrimitiveType::Address) => self
+            MTy::Type::Primitive(MTy::PrimitiveType::Address) => Ok(self
                 .eval_state
                 .all_addresses()
                 .into_iter()
+                .chain(self.global_state.get_touched_addresses().iter().copied())
                 .map(BaseValue::Address)
-                .collect(),
-            _ => unreachable!(),
+                .collect()),
+            _ => {
+                self.record_evaluation_failure(
+                    exp,
+                    "enumeration of a non-address type domain is not supported",
+                );
+                Err(Self::eval_failure_code())
+            }
         }
     }
 
@@ -1267,10 +1274,10 @@ impl<'env> Evaluator<'env> {
     // utilities
     //
 
-    fn record_evaluation_failure(&self, exp: &Exp, _err: BigInt) {
+    fn record_evaluation_failure(&self, exp: &Exp, msg: &str) {
         let env = self.target.global_env();
         let loc = env.get_node_loc(exp.node_id());
-        env.error(&loc, "failed to evaluate expression");
+        env.error(&loc, &format!("failed to evaluate expression: {}", msg));
     }
 
     fn record_checking_failure(&self, exp: &Exp) {
