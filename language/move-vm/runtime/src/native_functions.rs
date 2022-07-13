@@ -4,7 +4,7 @@
 use crate::{
     interpreter::Interpreter, loader::Resolver, native_extensions::NativeContextExtensions,
 };
-use move_binary_format::errors::{PartialVMError, PartialVMResult};
+use move_binary_format::errors::{ExecutionState, PartialVMError, PartialVMResult};
 use move_core_types::{
     account_address::AccountAddress,
     gas_schedule::CostTable,
@@ -156,5 +156,11 @@ impl<'a, 'b> NativeContext<'a, 'b> {
 
     pub fn extensions_mut(&mut self) -> &mut NativeContextExtensions<'b> {
         self.extensions
+    }
+
+    /// Get count stack frames, including the one of the called native function. This
+    /// allows a native function to reflect about its caller.
+    pub fn stack_frames(&self, count: usize) -> ExecutionState {
+        self.interpreter.get_stack_frames(count)
     }
 }
