@@ -340,7 +340,7 @@ object "test_A2_M_test_pack_S" {
         }
     }
 }
-===> Test result of M::test_pack_S: Succeed(Stopped) (used_gas=1244): []
+===> Test result of M::test_pack_S: Succeed(Stopped) (used_gas=1235): []
 
 // test of M::test_pack_S2
 /* =======================================
@@ -507,7 +507,7 @@ object "test_A2_M_test_pack_S2" {
         }
     }
 }
-===> Test result of M::test_pack_S2: Succeed(Stopped) (used_gas=382): []
+===> Test result of M::test_pack_S2: Succeed(Stopped) (used_gas=378): []
 
 // test of M::test_pack_S2_fail
 /* =======================================
@@ -674,7 +674,7 @@ object "test_A2_M_test_pack_S2_fail" {
         }
     }
 }
-===> Test result of M::test_pack_S2_fail: Revert(Reverted) (used_gas=369): [0, 0, 0, 0, 0, 0, 0, 100]
+===> Test result of M::test_pack_S2_fail: Revert(Reverted) (used_gas=359): [0, 0, 0, 0, 0, 0, 0, 100]
 
 // test of M::test_read_S
 /* =======================================
@@ -941,7 +941,7 @@ object "test_A2_M_test_read_S" {
         }
     }
 }
-===> Test result of M::test_read_S: Succeed(Stopped) (used_gas=836): []
+===> Test result of M::test_read_S: Succeed(Stopped) (used_gas=832): []
 
 // test of M::test_read_and_write_S
 /* =======================================
@@ -1331,7 +1331,7 @@ object "test_A2_M_test_read_and_write_S" {
         }
     }
 }
-===> Test result of M::test_read_and_write_S: Succeed(Stopped) (used_gas=1794): []
+===> Test result of M::test_read_and_write_S: Succeed(Stopped) (used_gas=1788): []
 
 // test of M::test_unpack
 /* =======================================
@@ -1561,7 +1561,7 @@ object "test_A2_M_test_unpack" {
         }
     }
 }
-===> Test result of M::test_unpack: Succeed(Stopped) (used_gas=502): []
+===> Test result of M::test_unpack: Succeed(Stopped) (used_gas=498): []
 
 // test of M::test_write_S
 /* =======================================
@@ -1909,4 +1909,4 @@ object "test_A2_M_test_write_S" {
         }
     }
 }
-===> Test result of M::test_write_S: Succeed(Stopped) (used_gas=1371): []
+===> Test result of M::test_write_S: Succeed(Stopped) (used_gas=1365): []
