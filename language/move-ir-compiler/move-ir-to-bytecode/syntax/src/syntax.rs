@@ -1808,7 +1808,7 @@ fn parse_function_visibility(
 //         <acquires: AcquireList?>
 //         ";" =>? { ... }
 // }
-
+#[allow(clippy::unwrap_or_else_default)]
 fn parse_function_decl(
     tokens: &mut Lexer,
 ) -> Result<(FunctionName, Function), ParseError<Loc, anyhow::Error>> {

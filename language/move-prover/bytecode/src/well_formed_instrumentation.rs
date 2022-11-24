@@ -35,7 +35,7 @@ impl WellFormedInstrumentationProcessor {
         Box::new(Self {})
     }
 }
-
+#[allow(clippy::redundant-clone)]
 impl FunctionTargetProcessor for WellFormedInstrumentationProcessor {
     fn process(
         &self,

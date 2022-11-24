@@ -400,6 +400,7 @@ impl<'input> Lexer<'input> {
 }
 
 // Return the length of the substring matching [a-zA-Z$_][a-zA-Z0-9$_]
+#[allow(clippy::unnecessary_lazy_evaluations)]
 fn get_name_len(text: &str) -> usize {
     // If the first character is 0..=9 or EOF, then return a length of 0.
     let first_char = text.chars().next().unwrap_or('0');

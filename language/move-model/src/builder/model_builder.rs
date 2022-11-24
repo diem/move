@@ -32,6 +32,7 @@ use codespan_reporting::diagnostic::Severity;
 /// are extended with each module translated. Each table is a mapping from fully qualified names
 /// (module names plus item name in the module) to the entity.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) struct ModelBuilder<'env> {
     /// The global environment we are building.
     pub env: &'env mut GlobalEnv,

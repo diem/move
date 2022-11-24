@@ -448,7 +448,7 @@ pub struct AbstractState {
 
     pub call_graph: CallGraph,
 }
-
+#[allow(dead_code)]
 impl AbstractState {
     /// Create a new AbstractState with empty stack, locals, and register
     pub fn new() -> AbstractState {
