@@ -412,6 +412,7 @@ impl InstantiableModule {
 /// the locals, we only consider their type, represented by a `AbstractValue`
 /// and their availibility, represented by the `BorrowState`.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AbstractState {
     /// A Vector of `AbstractValue`s representing the VM value stack
     stack: Vec<AbstractValue>,

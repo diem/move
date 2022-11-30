@@ -16,6 +16,7 @@ use std::{cmp, fs, path::Path};
 const CONTEXT_SIZE: usize = 1000;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ModuleViewer {
     file_index: usize,
     source_code: Vec<String>,

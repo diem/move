@@ -60,6 +60,7 @@ pub(crate) struct ModelBuilder<'env> {
 
 /// A declaration of a specification function or operator in the builders state.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct SpecFunEntry {
     pub loc: Loc,
     pub oper: Operation,
@@ -70,6 +71,7 @@ pub(crate) struct SpecFunEntry {
 
 /// A declaration of a specification variable in the builders state.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct SpecVarEntry {
     pub loc: Loc,
     pub module_id: ModuleId,
@@ -80,6 +82,7 @@ pub(crate) struct SpecVarEntry {
 
 /// A declaration of a schema in the builders state.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) struct SpecSchemaEntry {
     pub loc: Loc,
     pub name: QualifiedSymbol,
@@ -97,6 +100,7 @@ pub(crate) struct SpecSchemaEntry {
 
 /// A declaration of a struct.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct StructEntry {
     pub loc: Loc,
     pub module_id: ModuleId,
@@ -109,6 +113,7 @@ pub(crate) struct StructEntry {
 
 /// A declaration of a function.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub(crate) struct FunEntry {
     pub loc: Loc,
     pub module_id: ModuleId,

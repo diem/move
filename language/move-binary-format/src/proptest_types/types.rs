@@ -140,6 +140,7 @@ impl StructHandleGen {
 }
 
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub struct StructDefinitionGen {
     name_idx: PropIndex,
     abilities: AbilitySetGen,

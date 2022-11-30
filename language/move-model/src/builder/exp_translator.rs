@@ -27,6 +27,7 @@ use crate::{
 };
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) struct ExpTranslator<'env, 'translator, 'module_translator> {
     pub parent: &'module_translator mut ModuleBuilder<'env, 'translator>,
     /// A symbol table for type parameters.

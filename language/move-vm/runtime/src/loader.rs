@@ -1342,6 +1342,7 @@ impl<'a> Resolver<'a> {
 // When code executes indexes in instructions are resolved against those runtime structure
 // so that any data needed for execution is immediately available
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) struct Module {
     id: ModuleId,
     // primitive pools
@@ -2010,6 +2011,7 @@ struct FieldHandle {
 
 // A field instantiation. The offset is the only used information when operating on a field
 #[derive(Debug)]
+#[allow(dead_code)]
 struct FieldInstantiation {
     offset: usize,
     // `ModuelCache::structs` global table index. It is the generic type.
