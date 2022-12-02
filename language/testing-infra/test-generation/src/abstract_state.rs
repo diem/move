@@ -444,6 +444,7 @@ pub struct AbstractState {
 
     /// This graph stores borrow information needed to ensure that bytecode instructions
     /// are memory safe
+    #[allow(dead_code)]
     borrow_graph: BorrowGraph,
 
     pub call_graph: CallGraph,
