@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-truffle5");
 require("hardhat-gas-reporter");
+require("hardhat-move");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -30,6 +31,7 @@ const ROPSTEN_PRIVATE_KEY = "000000000000000000000000000000000000000000000000000
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
+require('nomiclabs/hardhat-waffle');
 module.exports = {
   solidity: "0.8.4",
   gasReporter: {
