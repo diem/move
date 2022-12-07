@@ -13,6 +13,7 @@
 Move is a new programmable platform for blockchains and other applications where safety and correctness are paramount. It is an executable bytecode language designed to provide safe and verifiable transaction-oriented computation. The language features a strong type system with linear resource types, runtime checks, and formal verification.
 
 ## Community
+* Join us on the [Move Discord](https://discord.gg/M95qX3KnG8).
 * Browse code and content from the community at [awesome-move](https://github.com/MystenLabs/awesome-move).
 
 ## License
