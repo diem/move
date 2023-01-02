@@ -16,7 +16,7 @@ env:
 
 jobs:
   prepare:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       changes-target-branch: ${{ steps.changes.outputs.changes-target-branch }}
       changes-base-git-rev: ${{ steps.changes.outputs.changes-base-git-rev }}
@@ -67,7 +67,7 @@ jobs:
           pattern: 'docker/ci\|scripts/dev_setup.sh'
 
   dev-setup-sh-test:
-    runs-on: ubuntu-20.04-xl
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: prepare
     if: ${{ needs.prepare.outputs.test-dev-setup == 'true' }}
@@ -88,7 +88,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
 
   lint:
-    runs-on: ubuntu-20.04-xl
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: prepare
     if: ${{ needs.prepare.outputs.any-changes-founds == 'true' }}
@@ -222,8 +222,8 @@ jobs:
 
   # Compile (but don't run) the benchmarks, to insulate against bit rot
   build-benchmarks:
-    runs-on: ubuntu-20.04-xl
-    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
     needs: prepare
     if: ${{ needs.prepare.outputs.test-rust == 'true' }}
     container:
@@ -251,7 +251,7 @@ jobs:
 
   perf-benchmarks:
     name: run-perf-benchmarks
-    runs-on: ubuntu-20.04-xl
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     needs:
       - prepare
@@ -291,7 +291,7 @@ jobs:
 
   build-move-analyzer-vscode-extension:
     name: Build VS Code extension for move-analyzer
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs:
       - prepare
     steps:
@@ -331,3 +331,20 @@ jobs:
         uses: ./.github/actions/early-terminator
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
+  # check-for-broken-links:
+  #   name: Check for broken links in files
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - prepare
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Set up Ruby 2.6
+  #       uses: ruby/setup-ruby@v1
+  #       with:
+  #         ruby-version: 2.7
+  #     - name: Run Checks
+  #       run: |
+  #         gem install awesome_bot
+  #         # Don't look in git or target dirs. Don't check png, bib, tex, js, or shell files
+  #         # We allow links to be redirects, allow duplicates, and we also allow Too Many Requests (429) errors
+  #         find . -not \( -path "./.git*" -prune \) -not \( -path "./target" -prune \) -type f -not -name "*.png" -not -name "*.sh" -not -name "*.bib" -not -name "*.tex" -not -name "*.js" | while read arg; do awesome_bot --allow-redirect --allow-dupe --allow 429 --skip-save-results $arg; done
