@@ -76,8 +76,7 @@ harness = false
 required-features = ["evm-backend"]
 
 [features]
-default = ["evm-backend"]
-evm-backend = ["move-unit-test/evm-backend", "move-package/evm-arch"]
+evm-backend = ["move-unit-test/evm-backend", "move-package/evm-backend"]
 
 address20 = ["move-stdlib/address20"]
 address32 = ["move-stdlib/address32"]
