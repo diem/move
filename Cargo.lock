@@ -1921,7 +1921,6 @@ name = "move-binary-format"
 version = "0.0.3"
 dependencies = [
  "anyhow",
- "mirai-annotations",
  "move-core-types",
  "once_cell",
  "proptest",
@@ -1935,9 +1934,6 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-dependencies = [
- "mirai-annotations",
-]
 
 [[package]]
 name = "move-bytecode-source-map"
@@ -1970,7 +1966,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "invalid-mutations",
- "mirai-annotations",
  "move-binary-format",
  "move-borrow-graph",
  "move-core-types",
@@ -2092,7 +2087,6 @@ dependencies = [
  "anyhow",
  "bcs",
  "hex",
- "mirai-annotations",
  "once_cell",
  "proptest",
  "proptest-derive",
@@ -2658,7 +2652,6 @@ dependencies = [
  "better_any",
  "fail",
  "hex",
- "mirai-annotations",
  "move-binary-format",
  "move-bytecode-verifier",
  "move-compiler",
@@ -2694,7 +2687,6 @@ name = "move-vm-types"
 version = "0.1.0"
 dependencies = [
  "bcs",
- "mirai-annotations",
  "move-binary-format",
  "move-core-types",
  "once_cell",
@@ -4412,7 +4404,6 @@ dependencies = [
  "getrandom 0.2.2",
  "hex",
  "itertools 0.10.1",
- "mirai-annotations",
  "module-generation",
  "move-binary-format",
  "move-bytecode-verifier",
