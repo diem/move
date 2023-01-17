@@ -219,6 +219,28 @@ jobs:
         uses: ./.github/actions/early-terminator
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
+  diem-framework-build-all-packages:
+    runs-on: ubuntu-20.04-xl
+    timeout-minutes: 90
+    needs: prepare
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: ./.github/actions/build-setup
+      - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
+      - name: build Diem Framework Packages
+        run: "language/documentation/examples/diem-framework/build_all.sh"
+
+  diem-framework-test-all-packages:
+    runs-on: ubuntu-20.04-xl
+    timeout-minutes: 90
+    needs: prepare
+    steps:
+      - uses: actions/checkout@v2.4.0
+      - uses: ./.github/actions/build-setup
+      - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
+      - name: build Diem Framework Packages
+        run: "language/documentation/examples/diem-framework/test_all.sh"
+
 
   # Compile (but don't run) the benchmarks, to insulate against bit rot
   build-benchmarks:
