@@ -12,6 +12,7 @@ proptest! {
 
         let deserialized_module = CompiledModule::deserialize(&serialized)
             .expect("deserialization should work");
+
         prop_assert_eq!(module, deserialized_module);
     }
 }

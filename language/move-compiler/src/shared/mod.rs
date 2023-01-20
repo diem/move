@@ -275,6 +275,12 @@ pub struct Flags {
     )]
     flavor: String,
 
+    /// Bytecode version.
+    #[clap(
+        long = cli::BYTECODE_VERSION,
+    )]
+    bytecode_version: Option<u32>,
+
     /// If set, source files will not shadow dependency files. If the same file is passed to both,
     /// an error will be raised
     #[clap(
@@ -291,6 +297,7 @@ impl Flags {
             test: false,
             shadow: false,
             flavor: "".to_string(),
+            bytecode_version: None,
         }
     }
 
@@ -299,6 +306,7 @@ impl Flags {
             test: true,
             shadow: false,
             flavor: "".to_string(),
+            bytecode_version: None,
         }
     }
 
@@ -330,6 +338,10 @@ impl Flags {
 
     pub fn has_flavor(&self, flavor: &str) -> bool {
         self.flavor == flavor
+    }
+
+    pub fn bytecode_version(&self) -> Option<u32> {
+        self.bytecode_version
     }
 }
 

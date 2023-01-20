@@ -52,6 +52,7 @@ fn make_script(parameters: Signature) -> Vec<u8> {
         identifiers: vec![],
         address_identifiers: vec![],
         constant_pool: vec![],
+        metadata: vec![],
 
         type_parameters: vec![],
         parameters: parameters_idx,
@@ -115,6 +116,7 @@ fn make_script_with_non_linking_structs(parameters: Signature) -> Vec<u8> {
         ],
         address_identifiers: vec![AccountAddress::random()],
         constant_pool: vec![],
+        metadata: vec![],
 
         type_parameters: vec![],
         parameters: parameters_idx,
@@ -190,6 +192,7 @@ fn make_module_with_function(
         ],
         address_identifiers: vec![AccountAddress::random()],
         constant_pool: vec![],
+        metadata: vec![],
 
         struct_defs: vec![StructDefinition {
             struct_handle: StructHandleIndex(0),
