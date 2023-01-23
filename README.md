@@ -12,6 +12,21 @@
 
 Move is a new programmable platform for blockchains and other applications where safety and correctness are paramount. It is an executable bytecode language designed to provide safe and verifiable transaction-oriented computation. The language features a strong type system with linear resource types, runtime checks, and formal verification.
 
+## Quickstart
+
+### Build the [Docker](https://www.docker.com/community/open-source/) Image for the Command Line Tool
+
+```
+docker build -t move/cli -f docker/move-cli/Dockerfile .
+```
+
+### Build a Test Project
+
+```
+cd ./language/documentation/tutorial/step_1/BasicCoin
+docker run -v `pwd`:/project move/cli package build
+```
+
 ## Community
 * Browse code and content from the community at [awesome-move](https://github.com/MystenLabs/awesome-move).
 
