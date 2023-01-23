@@ -60,6 +60,7 @@ allowed = [
     "clippy::redundant_clone",
     "unused_must_use",
     "clippy::drop_copy",
+    "clippy::ptr-arg",
 ]
 warn = [
     "clippy::wildcard_dependencies",
