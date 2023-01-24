@@ -255,7 +255,7 @@ jobs:
 
   # Compile (but don't run) the benchmarks, to insulate against bit rot
   build-benchmarks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04-xl
     timeout-minutes: 90
     needs: prepare
     if: ${{ needs.prepare.outputs.test-rust == 'true' }}
