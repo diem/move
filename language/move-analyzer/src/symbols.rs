@@ -46,24 +46,30 @@
 //! definitions, the symbolicator builds a scope stack, entering encountered definitions and
 //! matching uses to a definition in the innermost scope.
 
-use crate::context::Context;
+use crate::{
+    context::Context,
+    diagnostics::{lsp_diagnostics, lsp_empty_diagnostics},
+    utils::get_loc,
+};
 use anyhow::Result;
-use codespan_reporting::files::{Files, SimpleFiles};
+use codespan_reporting::files::SimpleFiles;
+use crossbeam::channel::Sender;
 use im::ordmap::OrdMap;
 use lsp_server::{Request, RequestId};
-use lsp_types::{GotoDefinitionParams, Location, Position, Range, ReferenceParams};
+use lsp_types::{Diagnostic, GotoDefinitionParams, Location, Position, Range, ReferenceParams};
 use std::{
     cmp,
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
     fs,
     path::{Path, PathBuf},
+    sync::{Arc, Condvar, Mutex},
+    thread,
 };
 use tempfile::tempdir;
 use url::Url;
 
 use move_command_line_common::files::FileHash;
 use move_compiler::{
-    diagnostics,
     expansion::ast::{Fields, ModuleIdent, ModuleIdent_},
     naming::ast::{StructDefinition, StructFields, TParam, Type, TypeName_, Type_},
     parser::ast::StructName,
@@ -149,12 +155,17 @@ pub struct Symbolicator {
     /// A mapping from file names to file content (used to obtain source file locations)
     files: SimpleFiles<Symbol, String>,
     /// A mapping from file hashes to file IDs (used to obtain source file locations)
-    file_id_mapping: BTreeMap<FileHash, usize>,
+    file_id_mapping: HashMap<FileHash, usize>,
     /// Contains type params where relevant (e.g. when processing function definition)
     type_params: BTreeMap<Symbol, DefLoc>,
     /// Current processed module (always set before module processing starts)
     current_mod: Option<ModuleIdent_>,
 }
+
+/// Maps a line number to a list of use-def pairs on a given line (use-def set is sorted by
+/// col_start)
+#[derive(Debug)]
+struct UseDefMap(BTreeMap<u32, BTreeSet<UseDef>>);
 
 /// Result of the symbolication process
 pub struct Symbols {
@@ -166,6 +177,105 @@ pub struct Symbols {
     mod_ident_map: BTreeMap<PathBuf, ModuleIdent_>,
     /// A mapping from file hashes to file names
     file_name_mapping: BTreeMap<FileHash, Symbol>,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Copy)]
+enum RunnerState {
+    Run,
+    Wait,
+    Quit,
+}
+
+/// Data used during symbolication running and symbolication info updating
+pub struct SymbolicatorRunner {
+    mtx_cvar: Arc<(Mutex<RunnerState>, Condvar)>,
+}
+
+impl SymbolicatorRunner {
+    /// Create a new idle runner (one that does not actually symbolicate)
+    pub fn idle() -> Self {
+        let mtx_cvar = Arc::new((Mutex::new(RunnerState::Wait), Condvar::new()));
+        SymbolicatorRunner { mtx_cvar }
+    }
+
+    /// Create a new runner
+    pub fn new(
+        uri: &Url,
+        symbols: Arc<Mutex<Symbols>>,
+        sender: Sender<BTreeMap<Symbol, Vec<Diagnostic>>>,
+    ) -> Self {
+        let mtx_cvar = Arc::new((Mutex::new(RunnerState::Wait), Condvar::new()));
+        let thread_mtx_cvar = mtx_cvar.clone();
+        let pkg_path = uri.to_file_path().unwrap();
+
+        thread::spawn(move || {
+            let (mtx, cvar) = &*thread_mtx_cvar;
+            // infinite loop to wait for symbolication requests
+            loop {
+                let get_symbols = {
+                    // hold the lock only as long as it takes to get the data, rather than through
+                    // the whole symbolication process (hence a separate scope here)
+                    let mut symbolicate = mtx.lock().unwrap();
+                    match *symbolicate {
+                        RunnerState::Quit => break,
+                        RunnerState::Run => {
+                            *symbolicate = RunnerState::Wait;
+                            true
+                        }
+                        RunnerState::Wait => {
+                            // wait for next request
+                            symbolicate = cvar.wait(symbolicate).unwrap();
+                            match *symbolicate {
+                                RunnerState::Quit => break,
+                                RunnerState::Run => {
+                                    *symbolicate = RunnerState::Wait;
+                                    true
+                                }
+                                RunnerState::Wait => false,
+                            }
+                        }
+                    }
+                };
+                if get_symbols {
+                    eprintln!("symbolication started");
+                    match Symbolicator::get_symbols(&pkg_path) {
+                        Ok((symbols_opt, lsp_diagnostics)) => {
+                            eprintln!("symbolication finished");
+                            if let Some(new_symbols) = symbols_opt {
+                                // replace symbols only if they have been actually recomputed,
+                                // otherwise keep the old (possibly out-dated) symbolication info
+                                let mut old_symbols = symbols.lock().unwrap();
+                                *old_symbols = new_symbols;
+                            }
+                            // set/reset (previous) diagnostics
+                            if let Err(err) = sender.send(lsp_diagnostics) {
+                                eprintln!("could not pass diagnostics: {:?}", err);
+                            }
+                        }
+                        Err(err) => eprintln!("symbolication failed: {:?}", err),
+                    }
+                }
+            }
+        });
+
+        SymbolicatorRunner { mtx_cvar }
+    }
+
+    pub fn run(&self) {
+        eprintln!("scheduling run");
+        let (mtx, cvar) = &*self.mtx_cvar;
+        let mut symbolicate = mtx.lock().unwrap();
+        *symbolicate = RunnerState::Run;
+        cvar.notify_one();
+        eprintln!("scheduled run");
+    }
+
+    pub fn quit(&self) {
+        let (mtx, cvar) = &*self.mtx_cvar;
+        let mut symbolicate = mtx.lock().unwrap();
+        *symbolicate = RunnerState::Quit;
+        cvar.notify_one();
+    }
 }
 
 impl UseDef {
@@ -219,11 +329,6 @@ impl PartialEq for UseDef {
     }
 }
 
-/// Maps a line number to a list of use-def pairs on a given line (use-def set is sorted by
-/// col_start)
-#[derive(Debug)]
-struct UseDefMap(BTreeMap<u32, BTreeSet<UseDef>>);
-
 impl UseDefMap {
     fn new() -> Self {
         Self(BTreeMap::new())
@@ -239,8 +344,13 @@ impl UseDefMap {
 }
 
 impl Symbolicator {
-    /// Main driver to get symbols for the whole package
-    pub fn get_symbols(pkg_path: &Path) -> Result<Symbols> {
+    /// Main driver to get symbols for the whole package. Returned symbols is an option as only the
+    /// correctly computed symbols should be a replacement for the old set - if symbols are not
+    /// actually (re)computed and the diagnostics are returned, the old symbolic information should
+    /// be retained even if it's getting out-of-date.
+    pub fn get_symbols(
+        pkg_path: &Path,
+    ) -> Result<(Option<Symbols>, BTreeMap<Symbol, Vec<Diagnostic>>)> {
         let build_config = move_package::BuildConfig {
             test_mode: true,
             install_dir: Some(tempdir().unwrap().path().to_path_buf()),
@@ -255,7 +365,7 @@ impl Symbolicator {
         // file locations (in terms of line/column numbers)
         let source_files = &resolution_graph.file_sources();
         let mut files = SimpleFiles::new();
-        let mut file_id_mapping = BTreeMap::new();
+        let mut file_id_mapping = HashMap::new();
         let mut file_name_mapping = BTreeMap::new();
         for (fhash, (fname, source)) in source_files {
             let id = files.add(*fname, source.clone());
@@ -265,19 +375,45 @@ impl Symbolicator {
 
         let build_plan = BuildPlan::create(resolution_graph)?;
         let mut typed_ast = None;
+        let mut diagnostics = None;
         build_plan.compile_with_driver(&mut std::io::sink(), |compiler| {
-            let (files, comments_and_compiler_res) = compiler.run::<PASS_TYPING>().unwrap();
-            let (_, compiler) =
-                diagnostics::unwrap_or_report_diagnostics(&files, comments_and_compiler_res);
+            let (files, compilation_result) = compiler.run::<PASS_TYPING>()?;
+            let (_, compiler) = match compilation_result {
+                Ok(v) => v,
+                Err(diags) => {
+                    diagnostics = Some(diags);
+                    eprintln!("typed AST compilation failed");
+                    return Ok((files, vec![]));
+                }
+            };
+            eprintln!("compiled to typed AST");
             let (compiler, typed_program) = compiler.into_ast();
             typed_ast = Some(typed_program.clone());
+            eprintln!("compiling to bytecode");
             let compilation_result = compiler.at_typing(typed_program).build();
-
-            let (units, _) = diagnostics::unwrap_or_report_diagnostics(&files, compilation_result);
+            let (units, _) = match compilation_result {
+                Ok(v) => v,
+                Err(diags) => {
+                    diagnostics = Some(diags);
+                    eprintln!("bytecode compilation failed");
+                    return Ok((files, vec![]));
+                }
+            };
+            eprintln!("compiled to bytecode");
             Ok((files, units))
         })?;
 
-        debug_assert!(typed_ast.is_some());
+        debug_assert!(typed_ast.is_some() || diagnostics.is_some());
+        if let Some(compiler_diagnostics) = diagnostics {
+            let lsp_diagnostics = lsp_diagnostics(
+                &compiler_diagnostics.into_codespan_format(),
+                &files,
+                &file_id_mapping,
+                &file_name_mapping,
+            );
+            return Ok((None, lsp_diagnostics));
+        }
+
         let modules = &typed_ast.unwrap().modules;
 
         let mut mod_outer_defs = BTreeMap::new();
@@ -321,12 +457,14 @@ impl Symbolicator {
             symbolicator.mod_symbols(module_def, &mut references, use_defs);
         }
 
-        Ok(Symbols {
+        let lsp_diagnostics = lsp_empty_diagnostics(&file_name_mapping);
+        let symbols = Symbols {
             references,
             mod_use_defs,
             mod_ident_map,
             file_name_mapping,
-        })
+        };
+        Ok((Some(symbols), lsp_diagnostics))
     }
 
     /// Get empty symbols
@@ -347,7 +485,7 @@ impl Symbolicator {
         references: &mut BTreeMap<DefLoc, BTreeSet<UseLoc>>,
         mod_def: &ModuleDefinition,
         files: &SimpleFiles<Symbol, String>,
-        file_id_mapping: &BTreeMap<FileHash, usize>,
+        file_id_mapping: &HashMap<FileHash, usize>,
     ) -> (ModuleDefs, UseDefMap) {
         let mut structs = BTreeMap::new();
         let mut constants = BTreeMap::new();
@@ -568,20 +706,9 @@ impl Symbolicator {
     fn get_start_loc(
         pos: &Loc,
         files: &SimpleFiles<Symbol, String>,
-        file_id_mapping: &BTreeMap<FileHash, usize>,
+        file_id_mapping: &HashMap<FileHash, usize>,
     ) -> Option<Position> {
-        let id = match file_id_mapping.get(&pos.file_hash()) {
-            Some(v) => v,
-            None => return None,
-        };
-        match files.location(*id, pos.start() as usize) {
-            Ok(v) => Some(Position {
-                // we need 0-based column location
-                line: v.line_number as u32 - 1,
-                character: v.column_number as u32 - 1,
-            }),
-            Err(_) => None,
-        }
+        get_loc(&pos.file_hash(), pos.start(), files, file_id_mapping)
     }
 
     /// Get symbols for a sequence representing function body
@@ -1363,11 +1490,13 @@ pub fn on_use_request(
     // unwrap will succeed based on the logic above which the compiler is unable to figure out
     // without using Option
     let response = lsp_server::Response::new_ok(id, result.unwrap());
-    context
+    if let Err(err) = context
         .connection
         .sender
         .send(lsp_server::Message::Response(response))
-        .expect("could not send use response");
+    {
+        eprintln!("could not send use response: {:?}", err);
+    }
 }
 
 #[cfg(test)]
@@ -1400,7 +1529,8 @@ fn symbols_test() {
 
     path.push("tests/symbols");
 
-    let symbols = Symbolicator::get_symbols(path.as_path()).unwrap();
+    let (symbols_opt, _) = Symbolicator::get_symbols(path.as_path()).unwrap();
+    let symbols = symbols_opt.unwrap();
 
     let mut fpath = path.clone();
     fpath.push("sources/M1.move");
