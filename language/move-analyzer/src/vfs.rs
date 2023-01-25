@@ -53,6 +53,7 @@ pub fn on_text_document_sync_notification(
     symbolicator_runner: &symbols::SymbolicatorRunner,
     notification: &Notification,
 ) {
+    eprintln!("text document notification");
     match notification.method.as_str() {
         lsp_types::notification::DidOpenTextDocument::METHOD => {
             let parameters =
@@ -88,6 +89,7 @@ pub fn on_text_document_sync_notification(
                     .expect("could not deserialize notification");
             files.remove(parameters.text_document.uri.path());
         }
-        _ => panic!("invalid notification '{}'", notification.method),
+        _ => eprintln!("invalid notification '{}'", notification.method),
     }
+    eprintln!("text document notification handled");
 }
