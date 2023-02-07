@@ -1,6 +1,6 @@
 /// Utilities for comparing Move values based on their representation in BCS.
-module Std::Compare {
-    use Std::Vector;
+module std::compare {
+    use std::vector;
 
     // Move does not have signed integers, so we cannot use the usual 0, -1, 1 convention to
     // represent EQUAL, LESS_THAN, and GREATER_THAN. Instead, we fun a new convention using u8
@@ -39,8 +39,8 @@ module Std::Compare {
     /// > used in the Diem framework. However, should this functionality be needed in specification, a customized
     /// > native abstraction is needed in the prover framework.
     public fun cmp_bcs_bytes(v1: &vector<u8>, v2: &vector<u8>): u8 {
-        let i1 = Vector::length(v1);
-        let i2 = Vector::length(v2);
+        let i1 = vector::length(v1);
+        let i2 = vector::length(v2);
         let len_cmp = cmp_u64(i1, i2);
 
         // BCS uses little endian encoding for all integer types, so we choose to compare from left
@@ -49,7 +49,7 @@ module Std::Compare {
         while (i1 > 0 && i2 > 0) {
             i1 = i1 - 1;
             i2 = i2 - 1;
-            let elem_cmp = cmp_u8(*Vector::borrow(v1, i1), *Vector::borrow(v2, i2));
+            let elem_cmp = cmp_u8(*vector::borrow(v1, i1), *vector::borrow(v2, i2));
             if (elem_cmp != 0) return elem_cmp
             // else, compare next element
         };

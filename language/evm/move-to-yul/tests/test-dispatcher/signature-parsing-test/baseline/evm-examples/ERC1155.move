@@ -1,14 +1,14 @@
 #[evm_contract]
 /// An implementation of the ERC-1155 Multi Token Standard.
 module 0x2::ERC1155 {
-    use Std::ASCII::{String};
+    use std::ascii::{String};
     use Evm::U256::{U256, u256_from_words};
 
     /*
     #[callable(sig=b"uri() returns (string memory) "), view]
     /// Returns the name of the token
     public fun uri(): String {
-        Std::ASCII::string(b"abc") // TODO: this leads to compilation error "type needs to be struct or vector"
+        std::ascii::string(b"abc") // TODO: this leads to compilation error "type needs to be struct or vector"
     }
     */
 
