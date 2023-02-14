@@ -112,6 +112,7 @@ fn derive_module_for_async(
                     call_name,
                     sp(loc, vec![]),
                     Visibility::Public(loc),
+                    None,
                     sign,
                     send_call,
                 ));

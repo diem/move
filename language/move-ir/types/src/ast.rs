@@ -337,9 +337,6 @@ pub enum FunctionVisibility {
     /// The procedure can be invoked anywhere
     /// `public`
     Public,
-    /// The procedure can only be invoked from a script context
-    /// `public(script)`
-    Script,
     /// The procedure can be invoked internally as well as by modules in the friend list
     /// `public(friend)`
     Friend,
@@ -371,6 +368,8 @@ pub enum FunctionBody {
 pub struct Function_ {
     /// The visibility
     pub visibility: FunctionVisibility,
+    /// Is entry function
+    pub is_entry: bool,
     /// The type signature
     pub signature: FunctionSignature,
     /// List of nominal resources (declared in this module) that the procedure might access
@@ -945,6 +944,7 @@ impl Function_ {
     /// See the declaration of the struct `Function` for more details
     pub fn new(
         visibility: FunctionVisibility,
+        is_entry: bool,
         formals: Vec<(Var, Type)>,
         return_type: Vec<Type>,
         type_parameters: Vec<(TypeVar, BTreeSet<Ability>)>,
@@ -955,6 +955,7 @@ impl Function_ {
         let signature = FunctionSignature::new(formals, return_type, type_parameters);
         Function_ {
             visibility,
+            is_entry,
             signature,
             acquires,
             specifications,

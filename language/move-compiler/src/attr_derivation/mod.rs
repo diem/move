@@ -92,12 +92,14 @@ pub fn new_native_fun(
     name: FunctionName,
     attributes: Attributes,
     visibility: Visibility,
+    entry: Option<Loc>,
     signature: FunctionSignature,
 ) -> Function {
     Function {
         attributes: vec![attributes],
         loc,
         visibility,
+        entry,
         signature,
         acquires: vec![],
         name,
@@ -111,6 +113,7 @@ pub fn new_fun(
     name: FunctionName,
     attributes: Attributes,
     visibility: Visibility,
+    entry: Option<Loc>,
     signature: FunctionSignature,
     def: Exp,
 ) -> Function {
@@ -118,6 +121,7 @@ pub fn new_fun(
         attributes: vec![attributes],
         loc,
         visibility,
+        entry,
         signature,
         acquires: vec![],
         name,
