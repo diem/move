@@ -2730,7 +2730,7 @@ dependencies = [
 
 [[package]]
 name = "move-stdlib"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dir-diff",
  "file_diff",
