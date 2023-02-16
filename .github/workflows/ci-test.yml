@@ -27,7 +27,7 @@ jobs:
       test-dev-setup: ${{ steps.dev-setup-sh-changes.outputs.changes-found }}
       test-non-rust-lint: ${{ steps.non-rust-lint-changes.outputs.changes-found }}
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           # This ensures that the tip of the PR is checked out instead of the merge between the base ref and the tip
           # On `push` this value will be empty and will "do-the-right-thing"
@@ -76,7 +76,7 @@ jobs:
       matrix:
         target_os: [github]
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: build image with dev-setup.sh
@@ -97,7 +97,7 @@ jobs:
       volumes:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/build-setup
@@ -127,7 +127,7 @@ jobs:
       volumes:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0 #get all the history!!!
@@ -172,7 +172,7 @@ jobs:
       volumes:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/build-setup
@@ -198,7 +198,7 @@ jobs:
     timeout-minutes: 90
     needs: prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
       - name: run EVM-based move cli tests
@@ -209,7 +209,7 @@ jobs:
     timeout-minutes: 90
     needs: prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
       - name: run EVM-based move unit test framework tests
@@ -224,7 +224,7 @@ jobs:
     timeout-minutes: 90
     needs: prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
       - name: build Diem Framework Packages
@@ -235,7 +235,7 @@ jobs:
     timeout-minutes: 90
     needs: prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
       - name: test Diem Framework Packages
@@ -246,7 +246,7 @@ jobs:
     timeout-minutes: 90
     needs: prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
       - uses: ./.github/actions/build-setup
       - uses: Swatinem/rust-cache@c5ed9ba6b7e1bb8aff90d43acd2f0af4990fa57c
       - name: prove Diem Framework Packages
@@ -264,7 +264,7 @@ jobs:
       volumes:
         - "${{github.workspace}}:/opt/git/diem"
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: ./.github/actions/build-setup
@@ -292,7 +292,7 @@ jobs:
     env:
       CRITERION_HOME: /tmp/benches
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/cache@v2.1.6
@@ -328,7 +328,7 @@ jobs:
     needs:
       - prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Use Node.js 14
@@ -388,7 +388,7 @@ jobs:
     needs:
       - prepare
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3.3.0
       - name: Build Dockerfile
         run: "docker build -t move/cli -f docker/move-cli/Dockerfile ."
       - name: Build BasicCoin Move module
