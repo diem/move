@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Configuration } from './configuration';
-import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as lc from 'vscode-languageclient';
 import { log } from './log';
+import { sync as commandExistsSync } from 'command-exists';
 
 /** Information passed along to each VS Code command defined by this extension. */
 export class Context {
@@ -18,7 +18,7 @@ export class Context {
         extensionContext: Readonly<vscode.ExtensionContext>,
         configuration: Readonly<Configuration>,
     ): Context | Error {
-        if (!fs.existsSync(configuration.serverPath)) {
+        if (!commandExistsSync(configuration.serverPath)) {
             return new Error(
                 `language server executable '${configuration.serverPath}' could not be found, so ` +
                 'most extension features will be unavailable to you. Follow the instructions in ' +
