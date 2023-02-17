@@ -8,7 +8,7 @@ use lsp_server::{Connection, Message, Notification, Request, Response};
 use lsp_types::{
     notification::Notification as _, request::Request as _, CompletionOptions, Diagnostic,
     HoverProviderCapability, OneOf, SaveOptions, TextDocumentSyncCapability, TextDocumentSyncKind,
-    TextDocumentSyncOptions, WorkDoneProgressOptions,
+    TextDocumentSyncOptions, TypeDefinitionProviderCapability, WorkDoneProgressOptions,
 };
 use std::{
     collections::BTreeMap,
@@ -93,6 +93,9 @@ fn main() {
             },
         }),
         definition_provider: Some(OneOf::Left(symbols::DEFS_AND_REFS_SUPPORT)),
+        type_definition_provider: Some(TypeDefinitionProviderCapability::Simple(
+            symbols::DEFS_AND_REFS_SUPPORT,
+        )),
         references_provider: Some(OneOf::Left(symbols::DEFS_AND_REFS_SUPPORT)),
         ..Default::default()
     })
@@ -193,6 +196,9 @@ fn on_request(context: &Context, request: &Request) {
         lsp_types::request::Completion::METHOD => on_completion_request(context, request),
         lsp_types::request::GotoDefinition::METHOD => {
             symbols::on_go_to_def_request(context, request, &context.symbols.lock().unwrap());
+        }
+        lsp_types::request::GotoTypeDefinition::METHOD => {
+            symbols::on_go_to_type_def_request(context, request, &context.symbols.lock().unwrap());
         }
         lsp_types::request::References::METHOD => {
             symbols::on_references_request(context, request, &context.symbols.lock().unwrap());
