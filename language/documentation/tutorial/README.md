@@ -27,7 +27,6 @@ Now let's get started!
 If you haven't already, open your terminal and clone [the Diem repository](https://github.com/diem/diem) and [the Move repository](https://github.com/diem/move):
 
 ```bash
-git clone https://github.com/diem/diem.git
 git clone https://github.com/diem/move.git
 ```
 
@@ -47,59 +46,51 @@ Include them by running this command:
 source ~/.profile
 ````
 
-Next, install Move's command-line tools by running these commands:
+Next, install Move's command-line tool by running this commands:
 
 ```bash
-cd ..
-cargo install --path diem/diem-move/df-cli
-cargo install --path move/language/move-analyzer
-```
-
-After running these commands, you should be able to confirm that they can be
-invoked from the command line:
-
-```
-move-analyzer --version  # Outputs: move-analyzer 0.0.0
-```
-
-The `df-cli` executable is a convenient wrapper around Move's command line
-interface. In this tutorial, we will refer to it as `move`. You may add an alias
-so that you can invoke it as such:
-
-```bash
-alias move="df-cli"
+cargo install --path language/tools/move-cli
 ```
 
 You can check that it is working by running the following command:
 
 ```bash
-move package -h
+move package --help
 ```
 
 You should see something like this along with a list and description of a
 number of commands:
 
 ```
-move-package 0.1.0
-Package and build system for Move code.
-
+...
 USAGE:
     move package [FLAGS] [OPTIONS] <SUBCOMMAND>
 ...
 ```
 
 If you want to find what commands are available and what they do, running
-a command or subcommand with the `-h` flag will print documentation.
-
-There is official Move support for Visual Studio Code. You can install this
-extension by opening VS Code, searching for the "move-analyzer" extension in
-the Extension Pane, and installing it. More detailed instructions can be found
-in the extension's [README](https://github.com/diem/move/tree/main/language/move-analyzer/editors/code).
+a command or subcommand with the `--help` flag will print documentation.
 
 Before running the next steps, `cd` to the tutorial directory:
 ```bash
 cd <path_to_move_repo>/language/documentation/tutorial
 ```
+
+
+<details>
+<summary>Visual Studio Code Move support</summary>
+There is official Move support for Visual Studio Code. You need to install
+the move analyzer first:
+
+```bash
+cargo install --path language/move-analyzer
+```
+
+Now you can install the VS extension by opening VS Code, searching for the "move-analyzer" in
+the Extension Pane, and installing it. More detailed instructions can be found
+in the extension's [README](https://github.com/move-language/move/tree/main/language/move-analyzer/editors/code).
+</details>
+
 
 ## Step 1: Writing my first Move module<span id="Step1"><span>
 
@@ -592,7 +583,7 @@ which outputs the following error information:
 
 ```
 error: abort not covered by any of the `aborts_if` clauses
-   ┌─ diem/language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:38:5
+   ┌─ language/documentation/tutorial/step_7/BasicCoin/sources/BasicCoin.move:38:5
    │
 35 │           borrow_global<Balance<CoinType>>(owner).coin.value
    │           ------------- abort happened here with execution failure
@@ -602,9 +593,9 @@ error: abort not covered by any of the `aborts_if` clauses
 40 │ │     }
    │ ╰─────^
    │
-   =     at /diem/language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:34: balance_of
+   =     at language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:34: balance_of
    =         owner = 0x29
-   =     at /diem/language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:35: balance_of
+   =     at language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:35: balance_of
    =         ABORTED
 
 Error: exiting with verification errors
@@ -646,7 +637,8 @@ The method withdraws tokens with value `amount` from the address `addr` and retu
     }
 ```
 
-As we can see here, a spec block can contain let bindings which introduce names for expressions. `global<T>(address): T` is a built-in function that returns the resource value at `addr`. `balance` is the number of tokens owned by `addr`. `exists<T>(address): bool` is a built-in function that returns true if the resource T exists at address. Two `aborts_if` clauses correspond to the two conditions mentioned above. In general, if a function has more than one `aborts_if` condition, those conditions are or-ed with each other. By default, if a user wants to specify aborts conditions, all possible conditions need to be listed. Otherwise, the prover will generate a verification error. However, if `pragma aborts_if_is_partial` is defined in the spec block, the combined aborts condition (the or-ed individual conditions) only *imply* that the function aborts. The reader can refer to the [MSL](https://github.com/diem/move/blob/main/language/move-prover/doc/user/spec-lang.md) document for more information.
+As we can see here, a spec block can contain let bindings which introduce names for expressions. `global<T>(address): T` is a built-in function that returns the resource value at `addr`. `balance` is the number of tokens owned by `addr`. `exists<T>(address): bool` is a built-in function that returns true if the resource T exists at address. Two `aborts_if` clauses correspond to the two conditions mentioned above. In general, if a function has more than one `aborts_if` condition, those conditions are or-ed with each other. By default, if a user wants to specify aborts conditions, all possible conditions need to be listed. Otherwise, the prover will generate a verification error. However, if `pragma aborts_if_is_partial` is defined in the spec block, the combined aborts condition (the or-ed individual conditions) only *imply* that the function aborts. The reader can refer to the
+[MSL](https://github.com/diem/move/blob/main/language/move-prover/doc/user/spec-lang.md) document for more information.
 
 The next step is to define functional properties, which are described in the two `ensures` clauses below. First, by using the `let post` binding, `balance_post` represents the balance of `addr` after the execution, which should be equal to `balance - amount`. Then, the return value (denoted as `result`) should be a coin with value `amount`.
 
@@ -724,7 +716,7 @@ spec transfer {
 The `ensures` clauses specify that the `amount` number of tokens is deducted from `addr_from` and added to `to`. However, the prover will generate the error information as below:
 
 ```
-   ┌─ diem/language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:62:9
+   ┌─ language/documentation/hackathon-tutorial/step_7/BasicCoin/sources/BasicCoin.move:62:9
    │
 62 │         ensures balance_from_post == balance_from - amount;
    │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
