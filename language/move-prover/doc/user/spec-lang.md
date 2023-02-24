@@ -1353,5 +1353,5 @@ spec x_or_y_test {
     pragma opaque;
     ensures result.x == 2;
     ensures result.y == s.y;
-}/in
+}
 ```

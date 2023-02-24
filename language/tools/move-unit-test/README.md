@@ -1,7 +1,7 @@
 ---
 id: move-unit-test
 title: Move Unit Testing Framework
-custom_edit_url: https://github.com/diem/move/edit/main/language/tools/move-unit-test
+custom_edit_url: https://github.com/diem/move/edit/main/language/tools/move-unit-test/README.md
 ---
 
 # Summary
