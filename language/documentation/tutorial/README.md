@@ -88,7 +88,7 @@ cargo install --path language/move-analyzer
 
 Now you can install the VS extension by opening VS Code, searching for the "move-analyzer" in
 the Extension Pane, and installing it. More detailed instructions can be found
-in the extension's [README](https://github.com/move-language/move/tree/main/language/move-analyzer/editors/code).
+in the extension's [README](https://github.com//move/tree/main/language/move-analyzer/editors/code).
 </details>
 
 
