@@ -24,8 +24,28 @@ jobs:
       changes-pull-request-number: ${{ steps.changes.outputs.changes-pull-request-number }}
       rust-changes: ${{ steps.rust-changes.outputs.changes-found }}
       base-image-changes: ${{ steps.base-image-changes.outputs.changes-found }}
+
+  generate-documentation:
+    name: Generate the Move Book using mdBook
+    runs-on: ubuntu-20.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v2.4.0
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: '0.4.10'
+          # mdbook-version: 'latest'
+
+      - run: mdbook build language/documentation/book
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./language/documentation/book/book
         with:
           # This ensures that the tip of the PR is checked out instead of the merge between the base ref and the tip
           # On `push` this value will be empty and will "do-the-right-thing"
