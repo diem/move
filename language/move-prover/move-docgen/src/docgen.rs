@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     cell::RefCell,
     collections::{BTreeMap, BTreeSet, VecDeque},
+    fmt::Write as FmtWrite,
     fs::{self, File},
     io::{Read, Write},
     path::{Path, PathBuf},
@@ -1466,7 +1467,13 @@ impl<'env> Docgen<'env> {
                                             "Missing backtick found in {} while generating documentation for the following text: \"{}\"",
                                             self.current_module.as_ref().unwrap().get_name().display_full(self.env.symbol_pool()), text,
                                         );
-                    decorated_text += &format!("<code>{}</code>", self.decorate_code(&code));
+
+                    write!(
+                        &mut decorated_text,
+                        "<code>{}</code>",
+                        self.decorate_code(&code)
+                    )
+                    .unwrap()
                 }
             } else {
                 decorated_text.push(chr);

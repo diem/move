@@ -319,8 +319,8 @@ impl Diagnostic {
 macro_rules! diag {
     ($code: expr, $primary: expr $(,)?) => {{
         #[allow(unused)]
-        use crate::diagnostics::codes::*;
-        crate::diagnostics::Diagnostic::new(
+        use $crate::diagnostics::codes::*;
+        $crate::diagnostics::Diagnostic::new(
             $code,
             $primary,
             std::iter::empty::<(move_ir_types::location::Loc, String)>(),
@@ -329,8 +329,8 @@ macro_rules! diag {
     }};
     ($code: expr, $primary: expr, $($secondary: expr),+ $(,)?) => {{
         #[allow(unused)]
-        use crate::diagnostics::codes::*;
-        crate::diagnostics::Diagnostic::new(
+        use $crate::diagnostics::codes::*;
+        $crate::diagnostics::Diagnostic::new(
             $code,
             $primary,
             vec![$($secondary, )*],

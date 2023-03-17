@@ -61,6 +61,14 @@ allowed = [
     "unused_must_use",
     "clippy::drop_copy",
     "clippy::ptr-arg",
+    "clippy::derive-partial-eq-without-eq",
+    "clippy::borrow-deref-ref",
+    "clippy::needless-return",
+    "clippy::let-and-return",
+    "clippy::manual-find",
+    "unused-parens",
+    "clippy::get-first",
+    "clippy::match-like-matches-macro",
 ]
 warn = [
     "clippy::wildcard_dependencies",

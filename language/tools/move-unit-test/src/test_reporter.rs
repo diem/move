@@ -527,7 +527,7 @@ impl TestResults {
                         "│ {}",
                         test_failure
                             .render_error(&self.test_plan)
-                            .replace("\n", "\n│ ")
+                            .replace('\n', "\n│ ")
                     )?;
                     writeln!(writer.lock().unwrap(), "└──────────────────\n")?;
                 }
