@@ -106,6 +106,6 @@ impl LeftScreen for BytecodeViewer<'_> {
     }
 
     fn backing_string(&self) -> String {
-        self.lines.join("\n").replace("\t", "    ")
+        self.lines.join("\n").replace('\t', "    ")
     }
 }
