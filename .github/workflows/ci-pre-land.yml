@@ -1,4 +1,6 @@
-name: ci-test
+# CI jobs to be run upon the code lands to the main branch or GitHub Action test branches.
+
+name: ci-pre-land
 
 on:
   push:
@@ -39,7 +41,7 @@ jobs:
         name: determine changes
         uses: diem/actions/changes@faadd16607b77dfa2231a8f366883e01717b3225
         with:
-          workflow-file: ci-test.yml
+          workflow-file: ci-pre-land.yml
           github-token: ${{secrets.GITHUB_TOKEN}}
       - id: any-changes-found
         name: determine if there are any files listed in the CHANGES_CHANGED_FILE_OUTPUTFILE.
