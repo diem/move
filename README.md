@@ -28,6 +28,7 @@ docker run -v `pwd`:/project move/cli build
 ```
 
 ## Community
+* Join us on the [Move Discord](https://discord.gg/M95qX3KnG8).
 * Browse code and content from the community at [awesome-move](https://github.com/MystenLabs/awesome-move).
 
 ## License
