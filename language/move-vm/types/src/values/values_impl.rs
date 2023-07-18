@@ -24,6 +24,7 @@ use std::{
     rc::Rc,
 };
 
+use serde::{Serialize, Deserialize};
 /***************************************************************************************
  *
  * Internal Types
@@ -35,7 +36,8 @@ use std::{
  **************************************************************************************/
 
 /// Runtime representation of a Move value.
-#[derive(Debug)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Serialize, Deserialize)]
 enum ValueImpl {
     Invalid,
 
@@ -60,7 +62,8 @@ enum ValueImpl {
 ///
 /// Except when not owned by the VM stack, a container always lives inside an Rc<RefCell<>>,
 /// making it possible to be shared by references.
-#[derive(Debug, Clone)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Clone, Serialize, Deserialize)]
 enum Container {
     Locals(Rc<RefCell<Vec<ValueImpl>>>),
     Vec(Rc<RefCell<Vec<ValueImpl>>>),
@@ -75,7 +78,8 @@ enum Container {
 /// A ContainerRef is a direct reference to a container, which could live either in the frame
 /// or in global storage. In the latter case, it also keeps a status flag indicating whether
 /// the container has been possibly modified.
-#[derive(Debug)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Serialize, Deserialize)]
 enum ContainerRef {
     Local(Container),
     Global {
@@ -87,14 +91,17 @@ enum ContainerRef {
 /// Status for global (on-chain) data:
 /// Clean - the data was only read.
 /// Dirty - the data was possibly modified.
-#[derive(Debug, Clone, Copy)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 enum GlobalDataStatus {
     Clean,
     Dirty,
 }
 
 /// A Move reference pointing to an element in a container.
-#[derive(Debug)]
+
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Serialize, Deserialize)]
 struct IndexedRef {
     idx: usize,
     container_ref: ContainerRef,
@@ -178,7 +185,8 @@ pub struct Struct {
 /// A special "slot" in global storage that can hold a resource. It also keeps track of the status
 /// of the resource relative to the global state, which is necessary to compute the effects to emit
 /// at the end of transaction execution.
-#[derive(Debug)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Serialize, Deserialize)]
 enum GlobalValueImpl {
     /// No resource resides in this slot or in storage.
     None,
@@ -196,7 +204,8 @@ enum GlobalValueImpl {
 
 /// A wrapper around `GlobalValueImpl`, representing a "slot" in global storage that can
 /// hold a resource.
-#[derive(Debug)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GlobalValue(GlobalValueImpl);
 
 /// Simple enum for the change state of a GlobalValue, used by `into_effect`.
@@ -2371,8 +2380,7 @@ pub mod debug {
  **************************************************************************************/
 use serde::{
     de::Error as DeError,
-    ser::{Error as SerError, SerializeSeq, SerializeTuple},
-    Deserialize,
+    ser::{Error as SerError, SerializeSeq, SerializeTuple}
 };
 
 impl Value {

@@ -20,6 +20,19 @@ use move_vm_types::{
 };
 use std::collections::btree_map::BTreeMap;
 
+// mvmt-patch; jack
+use serde::{Deserialize, Serialize};
+use serde_json;
+use rocksdb::{DB};
+use std::sync::Arc;
+
+const TX_CACHE_DB_PATH: &str = "tx-cache.db";
+// patch-end
+
+
+
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Serialize, Deserialize)]
 pub struct AccountDataCache {
     data_map: BTreeMap<Type, (MoveTypeLayout, GlobalValue)>,
     module_map: BTreeMap<Identifier, Vec<u8>>,
@@ -50,9 +63,57 @@ impl AccountDataCache {
 pub(crate) struct TransactionDataCache<'r, 'l, S> {
     remote: &'r S,
     loader: &'l Loader,
-    account_map: BTreeMap<AccountAddress, AccountDataCache>,
+    account_db: Arc<DB>, //BTreeMap<AccountAddress, AccountDataCache>,
     event_data: Vec<(Vec<u8>, u64, Type, MoveTypeLayout, Value)>,
 }
+
+// mvmt-patch; jack
+struct ParsedIterator<I>
+where
+    I: Iterator<Item = Result<(Box<[u8]>, Box<[u8]>), rocksdb::Error>>,
+{
+    inner: I,
+}
+
+impl<I> ParsedIterator<I>
+where
+    I: Iterator<Item = Result<(Box<[u8]>, Box<[u8]>), rocksdb::Error>>,
+{
+    fn new(inner: I) -> Self {
+        ParsedIterator { inner }
+    }
+}
+
+impl<I> Iterator for ParsedIterator<I>
+where
+    I: Iterator<Item = Result<(Box<[u8]>, Box<[u8]>), rocksdb::Error>>,
+{
+    type Item = (Option<AccountAddress>, Option<AccountDataCache>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|v| {
+            let x = v.ok();
+            if let Some((key_bytes, value_bytes)) = x {
+                    // Parse or deserialize the key and value
+                let parsed_key = parse_key(&key_bytes);
+                let parsed_value = deserialize_value(&value_bytes);
+                (parsed_key, parsed_value)
+            } else {
+                (None, None)
+            }
+        })
+    }
+}
+
+// Example functions for parsing and deserializing
+fn parse_key(key_bytes: &[u8]) -> Option<AccountAddress> {
+    serde_json::from_slice::<AccountAddress>(&key_bytes).ok()
+}
+
+fn deserialize_value(value_bytes: &[u8]) -> Option<AccountDataCache> {
+    serde_json::from_slice::<AccountDataCache>(&value_bytes).ok()
+}
+
 
 impl<'r, 'l, S: MoveResolver> TransactionDataCache<'r, 'l, S> {
     /// Create a `TransactionDataCache` with a `RemoteCache` that provides access to data
@@ -61,9 +122,39 @@ impl<'r, 'l, S: MoveResolver> TransactionDataCache<'r, 'l, S> {
         TransactionDataCache {
             remote,
             loader,
-            account_map: BTreeMap::new(),
+            account_db: Arc::new(DB::open_default(TX_CACHE_DB_PATH).unwrap()),
             event_data: vec![],
         }
+    }
+    // mvmt-patch; jack
+    fn load_account_data_cache(&self, addr: &AccountAddress) -> Result<Option<AccountDataCache>, PartialVMError> {
+        let account_cache = self
+            .account_db
+            .get_pinned(addr.as_ref())
+            .map_err(|err| PartialVMError::new(StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR)
+            .with_message(format!("RocksDB error: {:?}", err)))?;
+
+        if let Some(data) = account_cache {
+            Ok(Some(serde_json::from_slice::<AccountDataCache>(&data).map_err(|err| {
+                PartialVMError::new(StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR)
+                    .with_message(format!("Failed to deserialize AccountDataCache: {:?}", err))
+            })?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn save_account_data_cache(&self, addr: &AccountAddress, cache: &AccountDataCache) -> Result<(), PartialVMError> {
+        let data = serde_json::to_vec(cache).map_err(|err| {
+            PartialVMError::new(StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR)
+                .with_message(format!("Failed to serialize AccountDataCache: {:?}", err))
+        })?;
+
+        self.account_db.put(addr.as_ref(), &data).map_err(|err| {
+            PartialVMError::new(StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR)
+                .with_message(format!("RocksDB error: {:?}", err))
+        })?;
+        Ok(())
     }
 
     /// Make a write set from the updated (dirty, deleted) global resources along with
@@ -72,7 +163,15 @@ impl<'r, 'l, S: MoveResolver> TransactionDataCache<'r, 'l, S> {
     /// Gives all proper guarantees on lifetime of global data as well.
     pub(crate) fn into_effects(self) -> PartialVMResult<(ChangeSet, Vec<Event>)> {
         let mut change_set = ChangeSet::new();
-        for (addr, account_data_cache) in self.account_map.into_iter() {
+        // mvmt-patch; jack
+        let parsed_iter = ParsedIterator::new(self.account_db.iterator(rocksdb::IteratorMode::Start));
+        for (nullable_addr, nullable_account_data_cache) in parsed_iter {
+            if nullable_addr.is_none() || nullable_account_data_cache.is_none() {
+                return Err(PartialVMError::new(StatusCode::INTERNAL_TYPE_ERROR));
+            }
+            let addr = nullable_addr.unwrap();
+            let account_data_cache = nullable_account_data_cache.unwrap();
+
             let mut modules = BTreeMap::new();
             for (module_name, module_blob) in account_data_cache.module_map {
                 modules.insert(module_name, Some(module_blob));
@@ -122,15 +221,22 @@ impl<'r, 'l, S: MoveResolver> TransactionDataCache<'r, 'l, S> {
     pub(crate) fn num_mutated_accounts(&self, sender: &AccountAddress) -> u64 {
         // The sender's account will always be mutated.
         let mut total_mutated_accounts: u64 = 1;
-        for (addr, entry) in self.account_map.iter() {
-            if addr != sender && entry.data_map.values().any(|(_, v)| v.is_mutated()) {
-                total_mutated_accounts += 1;
+        // mvmt-patch; jack
+        let parsed_iter = ParsedIterator::new(self.account_db.iterator(rocksdb::IteratorMode::Start));
+        for (nullable_addr, nullable_entry) in parsed_iter {
+            if nullable_addr.is_some() && nullable_entry.is_some() {
+                let addr = nullable_addr.unwrap();
+                let entry = nullable_entry.unwrap();
+                if addr != *sender && entry.data_map.values().any(|(_, v)| v.is_mutated()) {
+                    total_mutated_accounts += 1;
+                }
             }
         }
         total_mutated_accounts
     }
 
-    fn get_mut_or_insert_with<'a, K, V, F>(map: &'a mut BTreeMap<K, V>, k: &K, gen: F) -> &'a mut V
+    // mvmt-patch; jack
+    fn _get_mut_or_insert_with<'a, K, V, F>(map: &'a mut BTreeMap<K, V>, k: &K, gen: F) -> &'a mut V
     where
         F: FnOnce() -> (K, V),
         K: Ord,
@@ -153,9 +259,10 @@ impl<'r, 'l, S: MoveResolver> DataStore for TransactionDataCache<'r, 'l, S> {
         addr: AccountAddress,
         ty: &Type,
     ) -> PartialVMResult<&mut GlobalValue> {
-        let account_cache = Self::get_mut_or_insert_with(&mut self.account_map, &addr, || {
-            (addr, AccountDataCache::new())
-        });
+        // mvmt-patch; jack
+        let mut account_cache = self
+            .load_account_data_cache(&addr)?
+            .unwrap_or_else(AccountDataCache::new);
 
         if !account_cache.data_map.contains_key(ty) {
             let ty_tag = match self.loader.type_to_type_tag(ty)? {
@@ -196,16 +303,24 @@ impl<'r, 'l, S: MoveResolver> DataStore for TransactionDataCache<'r, 'l, S> {
 
             account_cache.data_map.insert(ty.clone(), (ty_layout, gv));
         }
-
+        
+        // mvmt-patch; jack
+        // TODO - Not completed part
+        /*
         Ok(account_cache
             .data_map
             .get_mut(ty)
             .map(|(_ty_layout, gv)| gv)
-            .expect("global value must exist"))
+            .expect("global value must exist"))*/
+
+        Err(
+            PartialVMError::new(StatusCode::UNKNOWN_INVARIANT_VIOLATION_ERROR)
+                .with_message("Return Err Result".to_string()),
+        )
     }
 
     fn load_module(&self, module_id: &ModuleId) -> VMResult<Vec<u8>> {
-        if let Some(account_cache) = self.account_map.get(module_id.address()) {
+        if let Some(account_cache) = self.load_account_data_cache(module_id.address()).unwrap() {
             if let Some(blob) = account_cache.module_map.get(module_id.name()) {
                 return Ok(blob.clone());
             }
@@ -226,21 +341,21 @@ impl<'r, 'l, S: MoveResolver> DataStore for TransactionDataCache<'r, 'l, S> {
         }
     }
 
+    // mvmt-patch; jack
     fn publish_module(&mut self, module_id: &ModuleId, blob: Vec<u8>) -> VMResult<()> {
-        let account_cache =
-            Self::get_mut_or_insert_with(&mut self.account_map, module_id.address(), || {
-                (*module_id.address(), AccountDataCache::new())
-            });
+        let mut account_cache =
+            self.load_account_data_cache(module_id.address()).unwrap().unwrap_or_else(AccountDataCache::new);
 
         account_cache
             .module_map
             .insert(module_id.name().to_owned(), blob);
 
+        self.save_account_data_cache(module_id.address(), &account_cache).unwrap();
         Ok(())
     }
 
     fn exists_module(&self, module_id: &ModuleId) -> VMResult<bool> {
-        if let Some(account_cache) = self.account_map.get(module_id.address()) {
+        if let Some(account_cache) = self.load_account_data_cache(module_id.address()).unwrap() {
             if account_cache.module_map.contains_key(module_id.name()) {
                 return Ok(true);
             }

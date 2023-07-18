@@ -24,6 +24,12 @@ move-core-types = { path = "../../move-core/types" }
 move-vm-types = { path = "../types" }
 move-binary-format = { path = "../../move-binary-format" }
 
+# movement-patch; jack
+rocksdb = { version = "0.21.0", features = ["lz4"] }
+serde = "1.0.171"
+serde_json = "1.0.103"
+# patch-end
+
 [dev-dependencies]
 anyhow = "1.0.52"
 hex = "0.4.3"

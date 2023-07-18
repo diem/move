@@ -7,6 +7,8 @@ use move_binary_format::{
 };
 use move_core_types::{identifier::Identifier, language_storage::ModuleId, vm_status::StatusCode};
 
+use serde::{Deserialize, Serialize};
+
 pub const TYPE_DEPTH_MAX: usize = 256;
 
 #[derive(Debug, Clone, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -25,10 +27,12 @@ impl StructType {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, Hash, Ord, PartialEq, PartialOrd)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Copy, Clone, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct CachedStructIndex(pub usize);
 
-#[derive(Debug, Clone, Eq, Hash, Ord, PartialEq, PartialOrd)]
+// mvmt-patch; jack; +Serialize, Deserialize
+#[derive(Debug, Clone, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum Type {
     Bool,
     U8,
