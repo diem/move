@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{matrix.platform}}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: install rust toolchain
         uses: actions-rs/toolchain@v1
       - name: build for ${{ matrix.platform }}
