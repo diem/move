@@ -33,3 +33,5 @@ docker run -v `pwd`:/project move/cli build
 ## License
 
 Move is licensed as [Apache 2.0](https://github.com/diem/diem/blob/main/LICENSE).
+<br>## Welcome to Move Resource Model<br>Diem's Move ensures asset safety with linear types—new contributors, start with the bytecode verifier tutorial for your first module. Tip: Use Move CLI for testing! <br>
+
